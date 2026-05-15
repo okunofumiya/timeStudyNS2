@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>タイムスタディ記録</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      overscroll-behavior-y: none;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 font-sans h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10">
+    <div class="font-bold text-lg">タイムスタディ</div>
+    <div class="flex items-center space-x-3">
+      <div class="text-sm">
+        <span id="userIdDisplay" class="font-semibold cursor-pointer border-b border-dashed">未設定</span>
+      </div>
+      <button onclick="sendData()"
+        class="bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-bold shadow active:bg-blue-50">
+        送信 (<span id="unsentCount">0</span>)
+      </button>
+    </div>
+  </header>
+
+  <!-- メインアクションエリア -->
+  <main class="flex-1 overflow-y-auto p-4 pb-24">
+
+    <!-- ★現在の状態表示エリア（経過時間バッジを追加） -->
+    <div
+      class="mb-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 text-center shadow-sm">
+      <p class="text-xs text-blue-600 font-bold mb-1">現在の記録状態</p>
+      <p id="currentStatusDisplay" class="text-xl font-extrabold text-blue-900 tracking-wide">業務未開始</p>
+      <p class="text-xs text-blue-500 mt-2 flex items-center justify-center">
+        <span id="currentStatusTime">--:--</span> から継続中
+        <span id="elapsedTimeBadge"
+          class="hidden ml-2 bg-blue-600 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm">
+          0分経過
+        </span>
+      </p>
+    </div>
+
+    <h2 class="text-sm text-gray-500 mb-3 font-bold">業務記録（大区分）</h2>
+    <div id="mainCategoryContainer" class="grid grid-cols-2 gap-3">
+      <!-- 設定データを読み込み中... -->
+    </div>
+
+    <!-- 未送信データ確認エリア -->
+    <div class="mt-8 bg-white p-3 rounded-lg shadow-sm border text-xs text-gray-500">
+      <p class="font-bold mb-1">未送信の記録（直近3件）</p>
+      <ul id="localDataPreview" class="list-disc pl-4"></ul>
+    </div>
+  </main>
+
+  <!-- イベントPingエリア（画面下部に常時固定） -->
+  <div
+    class="fixed bottom-0 w-full bg-white border-t border-gray-200 p-2 pb-6 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-20">
+    <div class="flex justify-around items-center">
+      <button onclick="recordPing('PC待ち')"
+        class="flex flex-col items-center p-2 rounded-lg text-orange-600 active:bg-orange-50 w-1/3">
+        <div class="bg-orange-100 p-3 rounded-full mb-1 shadow-sm">💻</div>
+        <span class="text-xs font-bold">PC待ち</span>
+      </button>
+      <button onclick="recordPing('人探し')"
+        class="flex flex-col items-center p-2 rounded-lg text-red-600 active:bg-red-50 w-1/3">
+        <div class="bg-red-100 p-3 rounded-full mb-1 shadow-sm">👀</div>
+        <span class="text-xs font-bold">人探し</span>
+      </button>
+      <button onclick="recordPing('突発連携')"
+        class="flex flex-col items-center p-2 rounded-lg text-green-600 active:bg-green-50 w-1/3">
+        <div class="bg-green-100 p-3 rounded-full mb-1 shadow-sm">🗣️</div>
+        <span class="text-xs font-bold">突発連携</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 小区分選択モーダル -->
+  <div id="subCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-30">
+    <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl">
+      <h3 id="modalTitle" class="text-lg font-bold mb-4 text-center border-b pb-2"></h3>
+      <div id="subCategoryContainer" class="flex flex-col space-y-3">
+        <!-- JSで小区分ボタンを自動生成 -->
+      </div>
+      <button onclick="closeModal()"
+        class="mt-6 w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold active:bg-gray-300">
+        キャンセル
+      </button>
+    </div>
+  </div>
+
+  <!-- ★追加：イベント所要時間選択モーダル -->
+  <div id="durationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-40">
+    <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl">
+      <h3 id="durationModalTitle" class="text-lg font-bold mb-4 text-center border-b pb-2"></h3>
+      <p class="text-xs text-center text-gray-500 mb-3">かかった時間（ロスした時間）を選択してください</p>
+      <div class="grid grid-cols-3 gap-3 mb-5">
+        <button onclick="savePingWithDuration(5)"
+          class="bg-orange-50 text-orange-700 p-3 rounded-lg font-bold border border-orange-200 active:bg-orange-100">5分</button>
+        <button onclick="savePingWithDuration(10)"
+          class="bg-orange-50 text-orange-700 p-3 rounded-lg font-bold border border-orange-200 active:bg-orange-100">10分</button>
+        <button onclick="savePingWithDuration(15)"
+          class="bg-orange-50 text-orange-700 p-3 rounded-lg font-bold border border-orange-200 active:bg-orange-100">15分</button>
+        <button onclick="savePingWithDuration(20)"
+          class="bg-orange-50 text-orange-700 p-3 rounded-lg font-bold border border-orange-200 active:bg-orange-100">20分</button>
+        <button onclick="savePingWithDuration(25)"
+          class="bg-orange-50 text-orange-700 p-3 rounded-lg font-bold border border-orange-200 active:bg-orange-100">25分</button>
+        <button onclick="savePingWithDuration(30)"
+          class="bg-orange-50 text-orange-700 p-3 rounded-lg font-bold border border-orange-200 active:bg-orange-100">30分+</button>
+      </div>
+      <button onclick="closeDurationModal()"
+        class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold active:bg-gray-300">
+        キャンセル
+      </button>
+    </div>
+  </div>
+
+  <script>
+
+    // ★GASのWebアプリURL（/exec）をここに貼り付けます
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbymUwocQUfkm4p3FjWjVOtbpFj6lsJfQSXAuob3r5LZk-b_so__ZJ_ZNC16OFbMJ1uY/exec';
+
+    /* =========================================================
+       1. マスターデータと状態管理
+    ========================================================= */
+    let masterDataCache = [];
+    let currentUserId = localStorage.getItem('ts_userId') || '';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initUserId();
+      loadMasterData();
+      updateUnsentCount();
+      updateCurrentStatusUI(); // ★起動時に現在のステータスを復元
+    });
+
+    function initUserId() {
+      const display = document.getElementById('userIdDisplay');
+      if (!currentUserId) {
+        currentUserId = prompt('職員IDまたは名前を入力してください');
+        if (currentUserId) localStorage.setItem('ts_userId', currentUserId);
+        else currentUserId = '未設定';
+      }
+      display.textContent = currentUserId;
+
+      display.addEventListener('click', () => {
+        const newId = prompt('職員IDまたは名前を変更', currentUserId);
+        if (newId) {
+          currentUserId = newId;
+          localStorage.setItem('ts_userId', currentUserId);
+          display.textContent = currentUserId;
+        }
+      });
+    }
+
+    /* =========================================================
+       2. UI構築処理（マスターデータの読み込み）
+    ========================================================= */
+    function loadMasterData() {
+      const cached = localStorage.getItem('ts_masterData');
+      if (cached) {
+        masterDataCache = JSON.parse(cached);
+        renderMainCategories();
+      }
+
+      // VercelからGASへアクセスしてデータを取得
+      fetch(GAS_API_URL)
+        .then(response => response.json())
+        .then(response => {
+          if (response.success && response.data.length > 0) {
+            const newDataString = JSON.stringify(response.data);
+            if (newDataString !== cached) {
+              masterDataCache = response.data;
+              localStorage.setItem('ts_masterData', newDataString);
+              renderMainCategories();
+            }
+          }
+        })
+        .catch(error => console.log("通信エラー（オフライン）:", error));
+    }
+
+    function renderMainCategories() {
+      const container = document.getElementById('mainCategoryContainer');
+      container.innerHTML = '';
+      const mainCategories = [...new Set(masterDataCache.map(d => d.main))];
+
+      mainCategories.forEach(main => {
+        const btn = document.createElement('button');
+        btn.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center font-bold text-gray-700 active:bg-blue-50 active:border-blue-300 transition-colors";
+        btn.textContent = main;
+        btn.onclick = () => handleMainCategoryClick(main);
+        container.appendChild(btn);
+      });
+    }
+
+    /* =========================================================
+       3. 記録とステータス表示ロジック
+    ========================================================= */
+    function handleMainCategoryClick(mainCategory) {
+      const subs = masterDataCache.filter(d => d.main === mainCategory).map(d => d.sub);
+      if (subs.length === 1) {
+        saveRecord(mainCategory, subs[0]);
+      } else {
+        openSubCategoryModal(mainCategory, subs);
+      }
+    }
+
+    // ★修正：Pingボタンを押した時は時間入力モーダルを開く
+    let currentPingEvent = '';
+    function recordPing(eventName) {
+      currentPingEvent = eventName;
+      document.getElementById('durationModalTitle').textContent = eventName + ' の記録';
+      document.getElementById('durationModal').classList.remove('hidden');
+    }
+
+    // ★追加：時間を選択した時の保存処理
+    function savePingWithDuration(minutes) {
+      saveRecord('イベント', currentPingEvent, minutes);
+      closeDurationModal();
+      // 保存したことが視覚的に分かるように画面を一瞬光らせる
+      document.body.style.backgroundColor = '#fff7ed';
+      setTimeout(() => document.body.style.backgroundColor = '', 200);
+    }
+
+    function closeDurationModal() {
+      document.getElementById('durationModal').classList.add('hidden');
+    }
+
+    // 小区分モーダルの処理（省略せずに残します）
+    function openSubCategoryModal(mainCategory, subs) {
+      document.getElementById('modalTitle').textContent = mainCategory + ' の詳細';
+      const container = document.getElementById('subCategoryContainer');
+      container.innerHTML = '';
+      subs.forEach(sub => {
+        const btn = document.createElement('button');
+        btn.className = "bg-blue-50 text-blue-700 p-3 rounded-lg font-bold border border-blue-200 active:bg-blue-100";
+        btn.textContent = sub;
+        btn.onclick = () => {
+          saveRecord(mainCategory, sub);
+          closeModal();
+        };
+        container.appendChild(btn);
+      });
+      document.getElementById('subCategoryModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('subCategoryModal').classList.add('hidden');
+    }
+
+    // 経過時間を計算するタイマー用の変数
+    let elapsedTimer = null;
+
+    // saveRecord 関数の後半部分の修正
+    function saveRecord(main, sub, duration = '') {
+      if (currentUserId === '未設定') {
+        alert('先に職員IDを設定してください。');
+        return;
+      }
+
+      const timestamp = new Date();
+      const record = {
+        timestamp: timestamp.toISOString(),
+        mainCategory: main,
+        subCategory: sub,
+        userId: currentUserId,
+        duration: duration
+      };
+
+      let records = JSON.parse(localStorage.getItem('ts_records') || '[]');
+      records.push(record);
+      localStorage.setItem('ts_records', JSON.stringify(records));
+
+      if (main !== 'イベント') {
+        const status = {
+          main: main,
+          sub: sub,
+          timeText: timestamp.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+          startTimeMs: timestamp.getTime() // ★追加：差分計算用にミリ秒単位の時刻も保存しておく
+        };
+        localStorage.setItem('ts_currentStatus', JSON.stringify(status));
+        updateCurrentStatusUI();
+      }
+
+      updateUnsentCount();
+    }
+
+    // ★修正：ステータス表示とタイマーの処理
+    function updateCurrentStatusUI() {
+      const statusJson = localStorage.getItem('ts_currentStatus');
+      const displayEl = document.getElementById('currentStatusDisplay');
+      const timeEl = document.getElementById('currentStatusTime');
+      const badgeEl = document.getElementById('elapsedTimeBadge');
+
+      // 既存のタイマーが動いていれば一旦リセット
+      if (elapsedTimer) clearInterval(elapsedTimer);
+
+      if (statusJson) {
+        const status = JSON.parse(statusJson);
+        const displayText = (status.main === status.sub) ? status.main : `${status.main}：${status.sub}`;
+
+        displayEl.textContent = displayText;
+        timeEl.textContent = status.timeText;
+
+        // 開始時刻のデータがあればタイマーを起動
+        if (status.startTimeMs) {
+          badgeEl.classList.remove('hidden');
+
+          // 経過時間を計算して表示する関数
+          const updateTimer = () => {
+            const now = new Date().getTime();
+            const diffMs = now - status.startTimeMs; // 差分（ミリ秒）
+            const diffMins = Math.floor(diffMs / 60000); // 分に変換して切り捨て
+            badgeEl.textContent = `${diffMins}分経過`;
+          };
+
+          updateTimer(); // 初回1回目を即座に実行
+          // スリープ復帰のズレを防ぐため、1秒(1000ms)ごとに差分計算だけを回し続ける
+          elapsedTimer = setInterval(updateTimer, 1000);
+        }
+      } else {
+        badgeEl.classList.add('hidden');
+      }
+    }
+
+    /* =========================================================
+       4. データ送信処理
+    ========================================================= */
+    function updateUnsentCount() {
+      try {
+        const records = JSON.parse(localStorage.getItem('ts_records') || '[]');
+        const countEl = document.getElementById('unsentCount');
+        if (countEl) countEl.textContent = records.length;
+
+        const previewArea = document.getElementById('localDataPreview');
+        if (previewArea) {
+          previewArea.innerHTML = '';
+          records.slice(-3).reverse().forEach(r => {
+            const time = new Date(r.timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const li = document.createElement('li');
+            li.textContent = `${time} : [${r.mainCategory}] ${r.subCategory}`;
+            previewArea.appendChild(li);
+          });
+        }
+      } catch (e) {
+        console.error("UI更新エラー:", e);
+      }
+    }
+
+    function sendData() {
+      const records = JSON.parse(localStorage.getItem('ts_records') || '[]');
+      if (records.length === 0) {
+        alert('送信するデータがありません。');
+        return;
+      }
+      if (!confirm(`${records.length}件の記録を送信しますか？`)) return;
+
+      const btn = document.querySelector('button[onclick="sendData()"]');
+      const originalText = btn ? btn.innerHTML : '送信';
+      if (btn) btn.textContent = '送信中...';
+
+      // VercelからGASへデータを送信（CORS回避のため text/plain を使用）
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain', // ★ここがCORS回避の最大のポイント
+        },
+        body: JSON.stringify(records)
+      })
+        .then(response => response.json())
+        .then(response => {
+          if (response.success) {
+            localStorage.removeItem('ts_records'); // 送信成功時のみ時系列データを消去
+            if (btn) btn.innerHTML = originalText;
+            updateUnsentCount();
+            alert('送信が完了しました！');
+          } else {
+            throw new Error(response.message);
+          }
+        })
+        .catch(error => {
+          alert('通信エラー: 電波の良い場所で再度お試しください。');
+          if (btn) btn.innerHTML = originalText;
+        });
+    }
+  </script>
+</body>
+
+</html>
