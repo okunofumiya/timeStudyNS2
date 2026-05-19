@@ -5,6 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>タイムスタディ記録</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="apple-touch-icon" href="./icon-192.png"> <!-- iPhone用アイコン指定 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * {
@@ -390,6 +393,14 @@
           alert('通信エラー: 電波の良い場所で再度お試しください。');
           if (btn) btn.innerHTML = originalText;
         });
+    }
+    // Service Workerの登録（PWA化の要）
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(registration => console.log('ServiceWorker登録成功:', registration.scope))
+          .catch(error => console.log('ServiceWorker登録失敗:', error));
+      });
     }
   </script>
 </body>
