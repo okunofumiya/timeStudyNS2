@@ -1,0 +1,17 @@
+# 開発作業ログフォルダの除外
+WorkLog/
+
+# OS一時ファイル
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# エディタ設定ファイル
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
