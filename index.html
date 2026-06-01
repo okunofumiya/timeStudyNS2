@@ -155,70 +155,66 @@
   <!-- 過去履歴修正ウィザードモーダル -->
   <div id="correctionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
     <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl flex flex-col max-h-[90vh]">
-      <h3 class="text-lg font-bold mb-2 text-center border-b pb-2">過去履歴の手動修正</h3>
+      <h3 class="text-base font-bold mb-2 text-center border-b pb-2 text-gray-700">過去履歴の手動修正</h3>
       
-      <!-- 修正枠表示 -->
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-center">
-        <p class="text-xs text-blue-600 font-bold mb-1">修正対象枠: <span id="corrTimeFrame">--:-- 〜 --:--</span></p>
-        <p class="text-sm font-extrabold text-blue-900">残り時間: <span id="corrRemainingTime">0</span>分 / <span id="corrTotalTime">0</span>分</p>
+      <!-- 修正枠表示（常に表示） -->
+      <div class="bg-blue-50 border border-blue-100 rounded-lg p-2.5 mb-4 text-center text-xs">
+        <p class="text-[10px] text-blue-500 font-bold mb-0.5">修正枠: <span id="corrTimeFrame">--:-- 〜 --:--</span></p>
+        <p class="font-extrabold text-blue-800">残り: <span id="corrRemainingTime">0</span>分 / 合計: <span id="corrTotalTime">0</span>分</p>
       </div>
 
       <!-- ウィザードエリア -->
       <div id="corrWizardContent" class="flex-1 overflow-y-auto pr-1">
-        <!-- STEP 1: 行動選択 -->
-        <div id="corrStepCategory">
-          <p class="text-xs font-bold text-gray-500 mb-2">① 行動を選択してください</p>
+        
+        <!-- パネル 1: 所要時間の入力 -->
+        <div id="corrPanelDuration" class="hidden">
+          <p id="corrDurationTitle" class="text-sm font-bold text-gray-700 mb-4 text-center">Aの業務をどれくらい実施しましたか？</p>
+          <div class="flex items-center justify-center space-x-2 my-6">
+            <input type="number" id="corrDurationInput" min="1" class="w-32 text-center border-2 border-blue-500 rounded-lg p-2.5 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-blue-300 font-mono" placeholder="0">
+            <span class="text-lg font-bold text-gray-600">分</span>
+          </div>
+          <p class="text-[10px] text-gray-400 text-center mt-2">※ 入力可能範囲: 1 〜 <span id="corrMaxHint">0</span> 分</p>
+          <div class="mt-8 flex justify-center">
+            <button onclick="submitCorrDuration()" class="w-3/4 bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md active:bg-blue-700 transition-colors select-none">決定</button>
+          </div>
+        </div>
+
+        <!-- パネル 2: 行動の選択 -->
+        <div id="corrPanelAction" class="hidden">
+          <p class="text-sm font-bold text-gray-700 mb-4 text-center">その後に行った業務はなんですか？</p>
           <div id="corrCategoryContainer" class="grid grid-cols-2 gap-2 mb-4">
-            <!-- JSで大区分をボタン生成 -->
+            <!-- 大区分ボタン -->
           </div>
           <div id="corrSubCategoryContainer" class="hidden">
-            <p class="text-xs font-bold text-gray-500 mb-2">詳細（小区分）を選択してください</p>
+            <p class="text-xs font-bold text-gray-400 mb-2 text-center">詳細（小区分）を選択してください</p>
             <div id="corrSubCategoryGrid" class="grid grid-cols-2 gap-2 mb-4">
-              <!-- JSで小区分をボタン生成 -->
+              <!-- 小区分ボタン -->
             </div>
             <button onclick="backToCorrMainCategory()" class="w-full py-2 bg-gray-100 text-gray-600 rounded font-bold text-xs active:bg-gray-200">← 大区分選択に戻る</button>
           </div>
         </div>
 
-        <!-- STEP 2: 時間とステータス -->
-        <div id="corrStepDetails" class="hidden">
-          <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200 text-center">
-            <p class="text-[10px] font-bold text-gray-400">選択中の行動</p>
-            <p id="corrSelectedAction" class="text-sm font-black text-gray-800">大区分 ＞ 小区分</p>
-          </div>
-
-          <div class="mb-5">
-            <p class="text-xs font-bold text-gray-500 mb-3 text-center">② この行動の所要時間を入力してください</p>
-            <div class="flex items-center justify-center space-x-2">
-              <input type="number" id="corrDurationInput" oninput="onCorrDurationInputChange(this.value)" min="0" class="w-32 text-center border-2 border-blue-500 rounded-lg p-2.5 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-blue-300 font-mono">
-              <span class="text-lg font-bold text-gray-600">分</span>
-            </div>
-            <p class="text-[10px] text-gray-400 text-center mt-2">※ 残り時間（最大 <span id="corrMaxHint">0</span> 分）まで入力可能</p>
-          </div>
-
-          <div class="mb-4 border-t pt-4">
-            <p class="text-xs font-bold text-gray-500 mb-3 text-center">③ 次の行動へのステータス</p>
-            <div class="grid grid-cols-2 gap-3">
-              <button onclick="selectCorrStatus(true)" id="btnCorrOngoing" class="border-2 border-blue-500 bg-blue-50 text-blue-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center active:bg-blue-100 transition-colors">
-                <span class="text-base mb-1">🔄</span>
-                <span>今も継続中</span>
-              </button>
-              <button onclick="selectCorrStatus(false)" id="btnCorrFinished" class="border-2 border-gray-200 bg-white text-gray-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center active:bg-gray-50 transition-colors">
-                <span class="text-base mb-1">⏩</span>
-                <span>終了し次へ</span>
-              </button>
-            </div>
+        <!-- パネル 3: 継続の確認 -->
+        <div id="corrPanelOngoing" class="hidden">
+          <p id="corrOngoingTitle" class="text-sm font-bold text-gray-700 mb-6 text-center">Bは今も継続中ですか？</p>
+          <div class="flex flex-col space-y-4 px-4 mb-4">
+            <button onclick="submitCorrOngoing(true)" class="bg-blue-50 text-blue-700 p-4 rounded-xl font-bold text-sm border border-blue-200 active:bg-blue-100 transition-colors shadow-sm flex items-center justify-center space-x-2">
+              <span class="text-lg">🔄</span>
+              <span>はい（今も継続中）</span>
+            </button>
+            <button onclick="submitCorrOngoing(false)" class="bg-white text-gray-700 p-4 rounded-xl font-bold text-sm border border-gray-300 active:bg-gray-50 transition-colors shadow-sm flex items-center justify-center space-x-2">
+              <span class="text-lg">⏩</span>
+              <span>いいえ、別の業務に切り替わりました</span>
+            </button>
           </div>
         </div>
+
       </div>
 
-      <!-- フッター -->
-      <div class="mt-4 border-t pt-3 flex space-x-3">
-        <button onclick="closeCorrModal()" class="w-1/2 bg-gray-200 text-gray-700 py-2.5 rounded-lg font-bold text-sm active:bg-gray-300">
-          キャンセル
-        </button>
-        <button id="btnCorrNext" onclick="nextCorrStep()" disabled class="w-1/2 bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm opacity-50 cursor-not-allowed active:bg-blue-700 transition-opacity">
-          次の行動を入力
+      <!-- キャンセルボタン（全パネル共通、下部固定） -->
+      <div class="mt-4 border-t pt-3 flex justify-center">
+        <button onclick="closeCorrModal()" class="w-1/2 bg-gray-100 text-gray-500 py-2 rounded-lg font-bold text-xs active:bg-gray-200">
+          修正を取り消す（キャンセル）
         </button>
       </div>
     </div>
@@ -557,10 +553,13 @@
     /* =========================================================
        1.6. 過去履歴の手動修正ウィザード
      ========================================================= */
+    /* =========================================================
+       1.6. 過去履歴の手動修正ウィザード
+     ========================================================= */
     let corrTotalTime = 0;
     let corrRemainingTime = 0;
     let corrRecords = [];
-    let corrCurrentAction = { main: '', sub: '', duration: 0, isOngoing: true };
+    let corrCurrentAction = { main: '', sub: '', duration: 0, isOngoing: false };
     let corrStartTimeMs = 0;
 
     function startCorrection() {
@@ -599,88 +598,94 @@
         main: status.main,
         sub: status.sub,
         duration: 0,
-        isOngoing: true
+        isOngoing: false
       };
 
       // UI表示の更新
       const startTime = new Date(corrStartTimeMs);
       const timeFrameText = `${startTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} 〜 ${new Date(now).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`;
       document.getElementById('corrTimeFrame').textContent = timeFrameText;
-      updateCorrTimeUI();
+      
+      updateCorrTimeDisplay();
 
-      // UIをSTEP 2（所要時間入力）の状態にする
-      showCorrStepDetails();
+      // パネルを「所要時間入力」に切り替えて開始
+      showPanel('corrPanelDuration');
+      
+      // 入力欄のタイトルを設定
+      const actionName = (corrCurrentAction.main === corrCurrentAction.sub)
+        ? corrCurrentAction.main
+        : `${corrCurrentAction.main}：${corrCurrentAction.sub}`;
+      document.getElementById('corrDurationTitle').textContent = `「${actionName}」の業務をどれくらい実施しましたか？`;
+
+      // 数値入力フィールドを初期化
+      const inputEl = document.getElementById('corrDurationInput');
+      inputEl.value = '';
+      inputEl.placeholder = `最大 ${corrRemainingTime}`;
+      document.getElementById('corrMaxHint').textContent = corrRemainingTime;
 
       // モーダルを表示
       document.getElementById('correctionModal').classList.remove('hidden');
     }
 
-    function updateCorrTimeUI() {
+    function showPanel(panelId) {
+      // すべてのパネルを非表示にする
+      document.getElementById('corrPanelDuration').classList.add('hidden');
+      document.getElementById('corrPanelAction').classList.add('hidden');
+      document.getElementById('corrPanelOngoing').classList.add('hidden');
+      
+      // 指定のパネルを表示する
+      document.getElementById(panelId).classList.remove('hidden');
+    }
+
+    function updateCorrTimeDisplay() {
       document.getElementById('corrRemainingTime').textContent = corrRemainingTime;
       document.getElementById('corrTotalTime').textContent = corrTotalTime;
-      document.getElementById('corrMaxHint').textContent = corrRemainingTime;
-      
-      const inputEl = document.getElementById('corrDurationInput');
-      inputEl.value = corrCurrentAction.duration;
-
-      // 「今も継続中」の場合は入力を無効化（disabled）し、残り時間を自動割り当て
-      if (corrCurrentAction.isOngoing) {
-        inputEl.disabled = true;
-        inputEl.classList.add('bg-gray-100', 'text-gray-400');
-        inputEl.classList.remove('border-blue-500');
-        inputEl.classList.add('border-gray-200');
-      } else {
-        inputEl.disabled = false;
-        inputEl.classList.remove('bg-gray-100', 'text-gray-400');
-        inputEl.classList.remove('border-gray-200');
-        inputEl.classList.add('border-blue-500');
-      }
-
-      // 「次の行動を入力 / 確定」ボタンの制御
-      const btnNext = document.getElementById('btnCorrNext');
-      
-      if (corrCurrentAction.isOngoing) {
-        // 「今も継続中」の場合：所要時間は残り時間すべてになるため、期間入力に関わらず進める
-        btnNext.textContent = '修正を確定して保存';
-        btnNext.disabled = false;
-        btnNext.classList.remove('opacity-50', 'cursor-not-allowed');
-      } else {
-        // 「終了し次へ」の場合：所要時間が 0 より大きく、残り時間以下である必要がある
-        btnNext.textContent = '次の行動を入力';
-        const isDurationValid = corrCurrentAction.duration > 0;
-        if (isDurationValid && corrCurrentAction.duration <= corrRemainingTime) {
-          btnNext.disabled = false;
-          btnNext.classList.remove('opacity-50', 'cursor-not-allowed');
-        } else {
-          btnNext.disabled = true;
-          btnNext.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-      }
     }
 
-    function showCorrStepCategory() {
-      document.getElementById('corrStepCategory').classList.remove('hidden');
-      document.getElementById('corrStepDetails').classList.add('hidden');
+    // 「所要時間の入力」パネルでの［決定］押下処理
+    function submitCorrDuration() {
+      const inputEl = document.getElementById('corrDurationInput');
+      let val = parseInt(inputEl.value);
+
+      if (isNaN(val) || val <= 0) {
+        alert('1分以上の数値を入力してください。');
+        return;
+      }
+
+      if (val > corrRemainingTime) {
+        alert(`残り時間（最大 ${corrRemainingTime} 分）以内で入力してください。`);
+        return;
+      }
+
+      // 時間を確定
+      corrCurrentAction.duration = val;
+      corrRemainingTime -= val;
+      updateCorrTimeDisplay();
+
+      // 一時配列に保存
+      corrRecords.push({
+        main: corrCurrentAction.main,
+        sub: corrCurrentAction.sub,
+        duration: corrCurrentAction.duration,
+        isOngoing: corrCurrentAction.isOngoing
+      });
+
+      // 残り時間が0になった場合は、最後の行動として強制終了
+      if (corrRemainingTime <= 0) {
+        // 残り時間0になったので、この行動が「今も継続中」扱いとして確定保存
+        corrRecords[corrRecords.length - 1].isOngoing = true;
+        saveCorrRecords();
+        closeCorrModal();
+        return;
+      }
+
+      // 残り時間がある場合は、「次の行動の選択」パネルへ遷移
+      showPanel('corrPanelAction');
       
-      // 大区分選択画面のリセット
+      // カテゴリ選択画面の初期化
       document.getElementById('corrSubCategoryContainer').classList.add('hidden');
       document.getElementById('corrCategoryContainer').classList.remove('hidden');
-      
       renderCorrCategories();
-    }
-
-    function showCorrStepDetails() {
-      document.getElementById('corrStepCategory').classList.add('hidden');
-      document.getElementById('corrStepDetails').classList.remove('hidden');
-      
-      const actionText = (corrCurrentAction.main === corrCurrentAction.sub) 
-        ? corrCurrentAction.main 
-        : `${corrCurrentAction.main} ＞ ${corrCurrentAction.sub}`;
-      document.getElementById('corrSelectedAction').textContent = actionText;
-
-      // 「今も継続中」と「終了し次へ」ボタンのスタイルリセット
-      updateCorrStatusButtonsUI();
-      updateCorrTimeUI();
     }
 
     function renderCorrCategories() {
@@ -689,8 +694,7 @@
       const mainCategories = [...new Set(masterDataCache.map(d => d.main))];
 
       mainCategories.forEach(main => {
-        // 「イベント」は手動修正のタイムラインには載せない（別枠なので除外する）
-        if (main === 'イベント') return;
+        if (main === 'イベント') return; // イベントはタイムライン除外
 
         const btn = document.createElement('button');
         btn.className = "bg-white p-3 rounded-lg shadow-sm border border-gray-200 text-center font-bold text-xs text-gray-700 active:bg-blue-50 active:border-blue-300";
@@ -726,88 +730,59 @@
       document.getElementById('corrCategoryContainer').classList.remove('hidden');
     }
 
+    // 「行動の選択」パネルで小区分まで選択されたときの処理
     function selectCorrAction(main, sub) {
       corrCurrentAction = {
         main: main,
         sub: sub,
         duration: 0,
-        isOngoing: (main === 'その他' && sub === '終業') ? true : false // 終業ならデフォルトで継続（終業で確定）
+        isOngoing: false
       };
-      
-      // 次のステップ（詳細入力）へ
-      showCorrStepDetails();
-    }
 
-    function onCorrDurationInputChange(value) {
-      let targetMins = parseInt(value) || 0;
-      
-      // 0未満にはならない
-      if (targetMins < 0) targetMins = 0;
-      
-      // 残り時間を超えない
-      if (targetMins > corrRemainingTime) {
-        targetMins = corrRemainingTime;
-        document.getElementById('corrDurationInput').value = targetMins;
-      }
-
-      corrCurrentAction.duration = targetMins;
-      updateCorrTimeUI();
-    }
-
-    function selectCorrStatus(isOngoing) {
-      corrCurrentAction.isOngoing = isOngoing;
-      
-      if (isOngoing) {
-        // 「今も継続中」が選ばれた場合、残りの全時間をこの行動に割り当てる
+      // 終業の場合はその場で即完了扱い
+      if (main === 'その他' && sub === '終業') {
+        corrCurrentAction.isOngoing = true;
         corrCurrentAction.duration = corrRemainingTime;
-      } else {
-        // 「終了し次へ」に戻った場合は、一旦時間を0分に戻す
-        if (corrCurrentAction.duration === corrRemainingTime) {
-          corrCurrentAction.duration = 0;
-        }
-      }
-      
-      updateCorrStatusButtonsUI();
-      updateCorrTimeUI();
-    }
-
-    function updateCorrStatusButtonsUI() {
-      const btnOngoing = document.getElementById('btnCorrOngoing');
-      const btnFinished = document.getElementById('btnCorrFinished');
-      
-      if (corrCurrentAction.isOngoing) {
-        btnOngoing.className = "border-2 border-blue-500 bg-blue-50 text-blue-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center transition-colors";
-        btnFinished.className = "border-2 border-gray-200 bg-white text-gray-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center active:bg-gray-50 transition-colors";
-      } else {
-        btnOngoing.className = "border-2 border-gray-200 bg-white text-gray-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center active:bg-gray-50 transition-colors";
-        btnFinished.className = "border-2 border-blue-500 bg-blue-50 text-blue-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center transition-colors";
-      }
-    }
-
-    function nextCorrStep() {
-      // 1. 現在の入力を一時保存
-      const duration = corrCurrentAction.duration;
-      
-      corrRecords.push({
-        main: corrCurrentAction.main,
-        sub: corrCurrentAction.sub,
-        duration: duration,
-        isOngoing: corrCurrentAction.isOngoing
-      });
-
-      // 2. 残り時間の減算
-      corrRemainingTime -= duration;
-
-      // 3. ウィザードの完了条件チェック
-      if (corrCurrentAction.isOngoing || corrRemainingTime <= 0) {
-        // 完了：過去レコードの保存と、ステータスの更新
+        corrRemainingTime = 0;
+        corrRecords.push(corrCurrentAction);
         saveCorrRecords();
         closeCorrModal();
         return;
       }
 
-      // 4. 次の行動を入力するためのステップ1（行動選択）へ戻る
-      showCorrStepCategory();
+      // 「継続の確認」パネルへ遷移
+      const actionName = (main === sub) ? main : `${main}：${sub}`;
+      document.getElementById('corrOngoingTitle').textContent = `「${actionName}」は今も継続中ですか？`;
+      showPanel('corrPanelOngoing');
+    }
+
+    // 「継続の確認」パネルでの［はい / いいえ］クリック処理
+    function submitCorrOngoing(isOngoing) {
+      if (isOngoing) {
+        // 「はい（今も継続中）」の場合：残り時間すべてを割り当てて終了
+        corrCurrentAction.isOngoing = true;
+        corrCurrentAction.duration = corrRemainingTime;
+        corrRemainingTime = 0;
+        
+        corrRecords.push(corrCurrentAction);
+        saveCorrRecords();
+        closeCorrModal();
+      } else {
+        // 「いいえ」の場合：所要時間の入力パネルへ遷移
+        corrCurrentAction.isOngoing = false;
+        showPanel('corrPanelDuration');
+
+        const actionName = (corrCurrentAction.main === corrCurrentAction.sub)
+          ? corrCurrentAction.main
+          : `${corrCurrentAction.main}：${corrCurrentAction.sub}`;
+        document.getElementById('corrDurationTitle').textContent = `「${actionName}」をどれくらい実施しましたか？`;
+
+        // 数値入力フィールドをリセット
+        const inputEl = document.getElementById('corrDurationInput');
+        inputEl.value = '';
+        inputEl.placeholder = `最大 ${corrRemainingTime}`;
+        document.getElementById('corrMaxHint').textContent = corrRemainingTime;
+      }
     }
 
     function saveCorrRecords() {
