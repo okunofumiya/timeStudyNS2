@@ -24,7 +24,10 @@
 
   <!-- ヘッダー -->
   <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10">
-    <div class="font-bold text-lg">タイムスタディ</div>
+    <div class="flex items-center space-x-3">
+      <button onclick="toggleMenu(true)" class="text-white text-2xl focus:outline-none select-none">☰</button>
+      <div class="font-bold text-lg">タイムスタディ</div>
+    </div>
     <div class="flex items-center space-x-3">
       <div class="text-sm">
         <span id="userIdDisplay" class="font-semibold cursor-pointer border-b border-dashed">未設定</span>
@@ -127,6 +130,106 @@
     </div>
   </div>
 
+  <!-- サイドメニュー（ドロワー） -->
+  <div id="sideMenuOverlay" onclick="toggleMenu(false)" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 transition-opacity duration-300 opacity-0"></div>
+  <div id="sideMenu" class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+    <div class="p-5 bg-blue-600 text-white flex justify-between items-center shadow-md">
+      <div class="font-bold text-lg">メニュー</div>
+      <button onclick="toggleMenu(false)" class="text-white text-2xl focus:outline-none">×</button>
+    </div>
+    <div class="flex-1 py-2 overflow-y-auto">
+      <button onclick="startCorrection()" class="w-full text-left px-6 py-4 hover:bg-blue-50 active:bg-blue-100 flex items-center space-x-3 border-b border-gray-100 text-gray-700 font-bold transition-colors">
+        <span class="text-lg">✏️</span>
+        <span>過去の履歴を修正する</span>
+      </button>
+      <button onclick="finishWorkAndSend()" class="w-full text-left px-6 py-4 hover:bg-red-50 active:bg-red-100 flex items-center space-x-3 border-b border-gray-100 text-red-600 font-bold transition-colors">
+        <span class="text-lg">🚪</span>
+        <span>業務を終了して送信</span>
+      </button>
+    </div>
+    <div class="p-4 bg-gray-50 border-t text-[10px] text-gray-400 text-center">
+      タイムスタディ記録 App v1.1.0
+    </div>
+  </div>
+
+  <!-- 過去履歴修正ウィザードモーダル -->
+  <div id="correctionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
+    <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl flex flex-col max-h-[90vh]">
+      <h3 class="text-lg font-bold mb-2 text-center border-b pb-2">過去履歴の手動修正</h3>
+      
+      <!-- 修正枠表示 -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-center">
+        <p class="text-xs text-blue-600 font-bold mb-1">修正対象枠: <span id="corrTimeFrame">--:-- 〜 --:--</span></p>
+        <p class="text-sm font-extrabold text-blue-900">残り時間: <span id="corrRemainingTime">0</span>分 / <span id="corrTotalTime">0</span>分</p>
+      </div>
+
+      <!-- ウィザードエリア -->
+      <div id="corrWizardContent" class="flex-1 overflow-y-auto pr-1">
+        <!-- STEP 1: 行動選択 -->
+        <div id="corrStepCategory">
+          <p class="text-xs font-bold text-gray-500 mb-2">① 行動を選択してください</p>
+          <div id="corrCategoryContainer" class="grid grid-cols-2 gap-2 mb-4">
+            <!-- JSで大区分をボタン生成 -->
+          </div>
+          <div id="corrSubCategoryContainer" class="hidden">
+            <p class="text-xs font-bold text-gray-500 mb-2">詳細（小区分）を選択してください</p>
+            <div id="corrSubCategoryGrid" class="grid grid-cols-2 gap-2 mb-4">
+              <!-- JSで小区分をボタン生成 -->
+            </div>
+            <button onclick="backToCorrMainCategory()" class="w-full py-2 bg-gray-100 text-gray-600 rounded font-bold text-xs active:bg-gray-200">← 大区分選択に戻る</button>
+          </div>
+        </div>
+
+        <!-- STEP 2: 時間とステータス -->
+        <div id="corrStepDetails" class="hidden">
+          <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200 text-center">
+            <p class="text-[10px] font-bold text-gray-400">選択中の行動</p>
+            <p id="corrSelectedAction" class="text-sm font-black text-gray-800">大区分 ＞ 小区分</p>
+          </div>
+
+          <div class="mb-5">
+            <p class="text-xs font-bold text-gray-500 mb-2 text-center">② この行動の所要時間を入力してください</p>
+            <div class="flex items-center justify-center space-x-1 mb-2">
+              <button onclick="adjustCorrDuration(-30)" class="bg-gray-100 text-gray-700 px-2 py-2 rounded font-bold text-xs border border-gray-200 active:bg-gray-200">-30分</button>
+              <button onclick="adjustCorrDuration(-20)" class="bg-gray-100 text-gray-700 px-2 py-2 rounded font-bold text-xs border border-gray-200 active:bg-gray-200">-20分</button>
+              <button onclick="adjustCorrDuration(-5)" class="bg-gray-100 text-gray-700 px-2 py-2 rounded font-bold text-xs border border-gray-200 active:bg-gray-200">-5分</button>
+            </div>
+            <div class="text-3xl font-black text-blue-600 text-center my-3"><span id="corrDurationInput">0</span>分</div>
+            <div class="flex items-center justify-center space-x-1">
+              <button onclick="adjustCorrDuration(5)" class="bg-blue-50 text-blue-700 px-2 py-2 rounded font-bold text-xs border border-blue-200 active:bg-blue-100">+5分</button>
+              <button onclick="adjustCorrDuration(20)" class="bg-blue-50 text-blue-700 px-2 py-2 rounded font-bold text-xs border border-blue-200 active:bg-blue-100">+20分</button>
+              <button onclick="adjustCorrDuration(30)" class="bg-blue-50 text-blue-700 px-2 py-2 rounded font-bold text-xs border border-blue-200 active:bg-blue-100">+30分</button>
+            </div>
+          </div>
+
+          <div class="mb-4 border-t pt-4">
+            <p class="text-xs font-bold text-gray-500 mb-3 text-center">③ 次の行動へのステータス</p>
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="selectCorrStatus(true)" id="btnCorrOngoing" class="border-2 border-blue-500 bg-blue-50 text-blue-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center active:bg-blue-100 transition-colors">
+                <span class="text-base mb-1">🔄</span>
+                <span>今も継続中</span>
+              </button>
+              <button onclick="selectCorrStatus(false)" id="btnCorrFinished" class="border-2 border-gray-200 bg-white text-gray-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center active:bg-gray-50 transition-colors">
+                <span class="text-base mb-1">⏩</span>
+                <span>終了し次へ</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- フッター -->
+      <div class="mt-4 border-t pt-3 flex space-x-3">
+        <button onclick="closeCorrModal()" class="w-1/2 bg-gray-200 text-gray-700 py-2.5 rounded-lg font-bold text-sm active:bg-gray-300">
+          キャンセル
+        </button>
+        <button id="btnCorrNext" onclick="nextCorrStep()" disabled class="w-1/2 bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm opacity-50 cursor-not-allowed active:bg-blue-700 transition-opacity">
+          次の行動を入力
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
 
     // ★GASのWebアプリURL（/exec）をここに貼り付けます
@@ -136,7 +239,8 @@
        1. マスターデータと状態管理
     ========================================================= */
     let masterDataCache = [];
-    let currentUserId = localStorage.getItem('ts_userId') || '';
+    let currentUserCode = localStorage.getItem('ts_userCode') || '';
+    let currentUserName = localStorage.getItem('ts_userName') || '';
 
     document.addEventListener('DOMContentLoaded', () => {
       initUserId();
@@ -145,23 +249,80 @@
       updateCurrentStatusUI(); // ★起動時に現在のステータスを復元
     });
 
-    function initUserId() {
-      const display = document.getElementById('userIdDisplay');
-      if (!currentUserId) {
-        currentUserId = prompt('職員IDまたは名前を入力してください');
-        if (currentUserId) localStorage.setItem('ts_userId', currentUserId);
-        else currentUserId = '未設定';
+    /* =========================================================
+       1.5. サイドメニューの制御
+     ========================================================= */
+    function toggleMenu(show) {
+      const overlay = document.getElementById('sideMenuOverlay');
+      const menu = document.getElementById('sideMenu');
+      if (show) {
+        overlay.classList.remove('hidden');
+        menu.classList.remove('-translate-x-full');
+        setTimeout(() => {
+          overlay.classList.add('opacity-100');
+        }, 10);
+      } else {
+        overlay.classList.remove('opacity-100');
+        menu.classList.add('-translate-x-full');
+        setTimeout(() => {
+          overlay.classList.add('hidden');
+        }, 300);
       }
-      display.textContent = currentUserId;
+    }
 
+    function finishWorkAndSend() {
+      toggleMenu(false);
+      if (currentUserCode === '未設定' || !currentUserName) {
+        alert('先に職員IDを設定してください。');
+        return;
+      }
+      const statusJson = localStorage.getItem('ts_currentStatus');
+      if (!statusJson) {
+        alert('業務が開始されていません。先に業務を開始してください。');
+        return;
+      }
+      if (confirm('本日の業務を終了し、記録を送信しますか？')) {
+        saveRecord('その他', '終業');
+      }
+    }
+
+    function initUserId() {
+      if (!currentUserCode || !currentUserName) {
+        const code = prompt('職員番号を入力してください');
+        const name = code ? prompt('名前（職員名）を入力してください') : '';
+        if (code && name) {
+          currentUserCode = code;
+          currentUserName = name;
+          localStorage.setItem('ts_userCode', currentUserCode);
+          localStorage.setItem('ts_userName', currentUserName);
+        } else {
+          currentUserCode = '未設定';
+          currentUserName = '';
+        }
+      }
+      updateUserDisplay();
+
+      const display = document.getElementById('userIdDisplay');
       display.addEventListener('click', () => {
-        const newId = prompt('職員IDまたは名前を変更', currentUserId);
-        if (newId) {
-          currentUserId = newId;
-          localStorage.setItem('ts_userId', currentUserId);
-          display.textContent = currentUserId;
+        const code = prompt('職員番号を変更', currentUserCode === '未設定' ? '' : currentUserCode);
+        const name = code ? prompt('名前（職員名）を変更', currentUserName) : '';
+        if (code && name) {
+          currentUserCode = code;
+          currentUserName = name;
+          localStorage.setItem('ts_userCode', currentUserCode);
+          localStorage.setItem('ts_userName', currentUserName);
+          updateUserDisplay();
         }
       });
+    }
+
+    function updateUserDisplay() {
+      const display = document.getElementById('userIdDisplay');
+      if (currentUserCode === '未設定' || !currentUserName) {
+        display.textContent = '未設定';
+      } else {
+        display.textContent = `[${currentUserCode}] ${currentUserName}`;
+      }
     }
 
     /* =========================================================
@@ -262,37 +423,100 @@
     // 経過時間を計算するタイマー用の変数
     let elapsedTimer = null;
 
-    // saveRecord 関数の後半部分の修正
+    // saveRecord 関数の修正：直前の業務の終了確定と所要時間計算、イベント即時保存、終業の自動送信
     function saveRecord(main, sub, duration = '') {
-      if (currentUserId === '未設定') {
+      if (currentUserCode === '未設定' || !currentUserName) {
         alert('先に職員IDを設定してください。');
         return;
       }
 
-      const timestamp = new Date();
-      const record = {
-        timestamp: timestamp.toISOString(),
-        mainCategory: main,
-        subCategory: sub,
-        userId: currentUserId,
-        duration: duration
-      };
-
+      const now = new Date();
       let records = JSON.parse(localStorage.getItem('ts_records') || '[]');
-      records.push(record);
-      localStorage.setItem('ts_records', JSON.stringify(records));
 
-      if (main !== 'イベント') {
-        const status = {
-          main: main,
-          sub: sub,
-          timeText: timestamp.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-          startTimeMs: timestamp.getTime() // ★追加：差分計算用にミリ秒単位の時刻も保存しておく
+      // A. イベント（PC待ちなど）の場合：即時保存、現在のステータスは変更しない
+      if (main === 'イベント') {
+        const durationMins = parseInt(duration) || 0;
+        const startTimestamp = new Date(now.getTime() - durationMins * 60000);
+        const record = {
+          timestamp: startTimestamp.toISOString(),
+          endTimestamp: now.toISOString(),
+          mainCategory: main,
+          subCategory: sub,
+          userCode: currentUserCode,
+          userName: currentUserName,
+          duration: durationMins
         };
-        localStorage.setItem('ts_currentStatus', JSON.stringify(status));
-        updateCurrentStatusUI();
+        records.push(record);
+        localStorage.setItem('ts_records', JSON.stringify(records));
+        updateUnsentCount();
+        return;
       }
 
+      // B. 通常業務の場合
+      // 1. 直前の業務（ts_currentStatus）があればクローズ処理を行う
+      const statusJson = localStorage.getItem('ts_currentStatus');
+      if (statusJson) {
+        try {
+          const status = JSON.parse(statusJson);
+          if (status.startTimeMs) {
+            const diffMs = now.getTime() - status.startTimeMs;
+            const diffMins = Math.floor(diffMs / 60000);
+            const isOverLimit = diffMins >= 240; // 4時間（240分）以上空いた場合は異常値とみなす
+
+            const pastRecord = {
+              timestamp: new Date(status.startTimeMs).toISOString(),
+              endTimestamp: isOverLimit ? new Date(status.startTimeMs).toISOString() : now.toISOString(),
+              mainCategory: status.main,
+              subCategory: status.sub,
+              userCode: currentUserCode,
+              userName: currentUserName,
+              duration: isOverLimit ? 0 : diffMins
+            };
+            records.push(pastRecord);
+          }
+        } catch (e) {
+          console.error("直前業務のクローズ処理エラー:", e);
+        }
+      }
+
+      // 2. 「その他 ＞ 終業」の場合の特別処理（自動送信）
+      if (main === 'その他' && sub === '終業') {
+        // 「終業」自体のレコード（所要時間0）を保存
+        const endRecord = {
+          timestamp: now.toISOString(),
+          endTimestamp: now.toISOString(),
+          mainCategory: main,
+          subCategory: sub,
+          userCode: currentUserCode,
+          userName: currentUserName,
+          duration: 0
+        };
+        records.push(endRecord);
+        localStorage.setItem('ts_records', JSON.stringify(records));
+        
+        // 現在のステータスをクリア
+        localStorage.removeItem('ts_currentStatus');
+        updateCurrentStatusUI();
+        updateUnsentCount();
+
+        // 自動送信を実行
+        setTimeout(() => {
+          sendData();
+        }, 300);
+        return;
+      }
+
+      // 3. 新しい業務を現在のステータスに設定
+      const status = {
+        main: main,
+        sub: sub,
+        timeText: now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+        startTimeMs: now.getTime()
+      };
+      localStorage.setItem('ts_currentStatus', JSON.stringify(status));
+      localStorage.setItem('ts_records', JSON.stringify(records));
+
+      updateCurrentStatusUI();
       updateUnsentCount();
     }
 
@@ -330,8 +554,307 @@
           elapsedTimer = setInterval(updateTimer, 1000);
         }
       } else {
+        displayEl.textContent = '業務未開始';
+        timeEl.textContent = '--:--';
         badgeEl.classList.add('hidden');
       }
+    }
+
+    /* =========================================================
+       1.6. 過去履歴の手動修正ウィザード
+     ========================================================= */
+    let corrTotalTime = 0;
+    let corrRemainingTime = 0;
+    let corrRecords = [];
+    let corrCurrentAction = { main: '', sub: '', duration: 0, isOngoing: true };
+    let corrStartTimeMs = 0;
+
+    function startCorrection() {
+      toggleMenu(false);
+      
+      const statusJson = localStorage.getItem('ts_currentStatus');
+      if (!statusJson) {
+        alert('業務が開始されていません。先に業務を開始してください。');
+        return;
+      }
+
+      const status = JSON.parse(statusJson);
+      if (!status.startTimeMs) {
+        alert('開始時刻のデータが不足しています。');
+        return;
+      }
+
+      // 修正可能枠の計算 (現在時刻 - 前回の業務の開始時刻)
+      const now = new Date().getTime();
+      const diffMs = now - status.startTimeMs;
+      const diffMins = Math.floor(diffMs / 60000);
+
+      if (diffMins <= 0) {
+        alert('前回の業務が開始されたばかりのため、まだ修正できません（1分以上経過した後に修正可能です）。');
+        return;
+      }
+
+      // 変数の初期化
+      corrStartTimeMs = status.startTimeMs;
+      corrTotalTime = diffMins;
+      corrRemainingTime = diffMins;
+      corrRecords = [];
+      
+      // 1つ目の行動は、現在記録中の行動（status.main, status.sub）で固定して開始する
+      corrCurrentAction = {
+        main: status.main,
+        sub: status.sub,
+        duration: 0,
+        isOngoing: true
+      };
+
+      // UI表示の更新
+      const startTime = new Date(corrStartTimeMs);
+      const timeFrameText = `${startTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} 〜 ${new Date(now).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`;
+      document.getElementById('corrTimeFrame').textContent = timeFrameText;
+      updateCorrTimeUI();
+
+      // UIをSTEP 2（所要時間入力）の状態にする
+      showCorrStepDetails();
+
+      // モーダルを表示
+      document.getElementById('correctionModal').classList.remove('hidden');
+    }
+
+    function updateCorrTimeUI() {
+      document.getElementById('corrRemainingTime').textContent = corrRemainingTime;
+      document.getElementById('corrTotalTime').textContent = corrTotalTime;
+      document.getElementById('corrDurationInput').textContent = corrCurrentAction.duration;
+
+      // 「次の行動を入力 / 確定」ボタンの制御
+      const btnNext = document.getElementById('btnCorrNext');
+      
+      if (corrCurrentAction.isOngoing) {
+        // 「今も継続中」の場合：所要時間は残り時間すべてになるため、期間入力に関わらず進める
+        btnNext.textContent = '修正を確定して保存';
+        btnNext.disabled = false;
+        btnNext.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        // 「終了し次へ」の場合：所要時間が 0 より大きく、残り時間以下である必要がある
+        btnNext.textContent = '次の行動を入力';
+        const isDurationValid = corrCurrentAction.duration > 0;
+        if (isDurationValid && corrCurrentAction.duration <= corrRemainingTime) {
+          btnNext.disabled = false;
+          btnNext.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+          btnNext.disabled = true;
+          btnNext.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      }
+    }
+
+    function showCorrStepCategory() {
+      document.getElementById('corrStepCategory').classList.remove('hidden');
+      document.getElementById('corrStepDetails').classList.add('hidden');
+      
+      // 大区分選択画面のリセット
+      document.getElementById('corrSubCategoryContainer').classList.add('hidden');
+      document.getElementById('corrCategoryContainer').classList.remove('hidden');
+      
+      renderCorrCategories();
+    }
+
+    function showCorrStepDetails() {
+      document.getElementById('corrStepCategory').classList.add('hidden');
+      document.getElementById('corrStepDetails').classList.remove('hidden');
+      
+      const actionText = (corrCurrentAction.main === corrCurrentAction.sub) 
+        ? corrCurrentAction.main 
+        : `${corrCurrentAction.main} ＞ ${corrCurrentAction.sub}`;
+      document.getElementById('corrSelectedAction').textContent = actionText;
+
+      // 「今も継続中」と「終了し次へ」ボタンのスタイルリセット
+      updateCorrStatusButtonsUI();
+      updateCorrTimeUI();
+    }
+
+    function renderCorrCategories() {
+      const container = document.getElementById('corrCategoryContainer');
+      container.innerHTML = '';
+      const mainCategories = [...new Set(masterDataCache.map(d => d.main))];
+
+      mainCategories.forEach(main => {
+        // 「イベント」は手動修正のタイムラインには載せない（別枠なので除外する）
+        if (main === 'イベント') return;
+
+        const btn = document.createElement('button');
+        btn.className = "bg-white p-3 rounded-lg shadow-sm border border-gray-200 text-center font-bold text-xs text-gray-700 active:bg-blue-50 active:border-blue-300";
+        btn.textContent = main;
+        btn.onclick = () => handleCorrCategoryClick(main);
+        container.appendChild(btn);
+      });
+    }
+
+    function handleCorrCategoryClick(mainCategory) {
+      const subs = masterDataCache.filter(d => d.main === mainCategory).map(d => d.sub);
+      if (subs.length === 1) {
+        selectCorrAction(mainCategory, subs[0]);
+      } else {
+        // 小区分リストの表示
+        document.getElementById('corrCategoryContainer').classList.add('hidden');
+        const container = document.getElementById('corrSubCategoryGrid');
+        container.innerHTML = '';
+        
+        subs.forEach(sub => {
+          const btn = document.createElement('button');
+          btn.className = "bg-blue-50 text-blue-700 p-2.5 rounded-lg font-bold border border-blue-200 text-xs active:bg-blue-100";
+          btn.textContent = sub;
+          btn.onclick = () => selectCorrAction(mainCategory, sub);
+          container.appendChild(btn);
+        });
+        document.getElementById('corrSubCategoryContainer').classList.remove('hidden');
+      }
+    }
+
+    function backToCorrMainCategory() {
+      document.getElementById('corrSubCategoryContainer').classList.add('hidden');
+      document.getElementById('corrCategoryContainer').classList.remove('hidden');
+    }
+
+    function selectCorrAction(main, sub) {
+      corrCurrentAction = {
+        main: main,
+        sub: sub,
+        duration: 0,
+        isOngoing: (main === 'その他' && sub === '終業') ? true : false // 終業ならデフォルトで継続（終業で確定）
+      };
+      
+      // 次のステップ（詳細入力）へ
+      showCorrStepDetails();
+    }
+
+    function adjustCorrDuration(mins) {
+      // 現在の値に加算
+      let targetMins = corrCurrentAction.duration + mins;
+      
+      // 0未満にはならない
+      if (targetMins < 0) targetMins = 0;
+      
+      // 残り時間を超えない
+      if (targetMins > corrRemainingTime) {
+        targetMins = corrRemainingTime;
+      }
+
+      corrCurrentAction.duration = targetMins;
+      updateCorrTimeUI();
+    }
+
+    function selectCorrStatus(isOngoing) {
+      corrCurrentAction.isOngoing = isOngoing;
+      
+      if (isOngoing) {
+        // 「今も継続中」が選ばれた場合、残りの全時間をこの行動に割り当てる
+        corrCurrentAction.duration = corrRemainingTime;
+      } else {
+        // 「終了し次へ」に戻った場合は、一旦時間を0分に戻す
+        if (corrCurrentAction.duration === corrRemainingTime) {
+          corrCurrentAction.duration = 0;
+        }
+      }
+      
+      updateCorrStatusButtonsUI();
+      updateCorrTimeUI();
+    }
+
+    function updateCorrStatusButtonsUI() {
+      const btnOngoing = document.getElementById('btnCorrOngoing');
+      const btnFinished = document.getElementById('btnCorrFinished');
+      
+      if (corrCurrentAction.isOngoing) {
+        btnOngoing.className = "border-2 border-blue-500 bg-blue-50 text-blue-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center transition-colors";
+        btnFinished.className = "border-2 border-gray-200 bg-white text-gray-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center active:bg-gray-50 transition-colors";
+      } else {
+        btnOngoing.className = "border-2 border-gray-200 bg-white text-gray-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center active:bg-gray-50 transition-colors";
+        btnFinished.className = "border-2 border-blue-500 bg-blue-50 text-blue-700 p-3 rounded-lg font-bold text-xs flex flex-col items-center justify-center transition-colors";
+      }
+    }
+
+    function nextCorrStep() {
+      // 1. 現在の入力を一時保存
+      const duration = corrCurrentAction.duration;
+      
+      corrRecords.push({
+        main: corrCurrentAction.main,
+        sub: corrCurrentAction.sub,
+        duration: duration,
+        isOngoing: corrCurrentAction.isOngoing
+      });
+
+      // 2. 残り時間の減算
+      corrRemainingTime -= duration;
+
+      // 3. ウィザードの完了条件チェック
+      if (corrCurrentAction.isOngoing || corrRemainingTime <= 0) {
+        // 完了：過去レコードの保存と、ステータスの更新
+        saveCorrRecords();
+        closeCorrModal();
+        return;
+      }
+
+      // 4. 次の行動を入力するためのステップ1（行動選択）へ戻る
+      showCorrStepCategory();
+    }
+
+    function saveCorrRecords() {
+      let records = JSON.parse(localStorage.getItem('ts_records') || '[]');
+      let currentMs = corrStartTimeMs;
+
+      // 遡って開始時刻と終了時刻を決定しながら、レコードに変換
+      for (let i = 0; i < corrRecords.length; i++) {
+        const item = corrRecords[i];
+        const startMs = currentMs;
+        const endMs = startMs + item.duration * 60000;
+        currentMs = endMs;
+
+        const record = {
+          timestamp: new Date(startMs).toISOString(),
+          endTimestamp: new Date(endMs).toISOString(),
+          mainCategory: item.main,
+          subCategory: item.sub,
+          userCode: currentUserCode,
+          userName: currentUserName,
+          duration: item.duration
+        };
+
+        if (item.isOngoing) {
+          // 「今も継続中」のものは送信対象レコードには直接保存せず、新しい現在のステータスにする
+          const status = {
+            main: item.main,
+            sub: item.sub,
+            timeText: new Date(startMs).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+            startTimeMs: startMs
+          };
+          
+          // もし「終業」であれば送信待ちレコードに格納してステータスをクリア
+          if (item.main === 'その他' && item.sub === '終業') {
+            records.push(record);
+            localStorage.removeItem('ts_currentStatus');
+            setTimeout(() => {
+              sendData();
+            }, 300);
+          } else {
+            localStorage.setItem('ts_currentStatus', JSON.stringify(status));
+          }
+        } else {
+          // 終了した行動は送信待ちレコードに蓄積
+          records.push(record);
+        }
+      }
+
+      localStorage.setItem('ts_records', JSON.stringify(records));
+      updateCurrentStatusUI();
+      updateUnsentCount();
+
+      alert('履歴を修正しました！');
+    }
+
+    function closeCorrModal() {
+      document.getElementById('correctionModal').classList.add('hidden');
     }
 
     /* =========================================================
