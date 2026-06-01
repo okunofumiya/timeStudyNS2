@@ -188,18 +188,12 @@
           </div>
 
           <div class="mb-5">
-            <p class="text-xs font-bold text-gray-500 mb-2 text-center">② この行動の所要時間を入力してください</p>
-            <div class="flex items-center justify-center space-x-1 mb-2">
-              <button onclick="adjustCorrDuration(-30)" class="bg-gray-100 text-gray-700 px-2 py-2 rounded font-bold text-xs border border-gray-200 active:bg-gray-200">-30分</button>
-              <button onclick="adjustCorrDuration(-20)" class="bg-gray-100 text-gray-700 px-2 py-2 rounded font-bold text-xs border border-gray-200 active:bg-gray-200">-20分</button>
-              <button onclick="adjustCorrDuration(-5)" class="bg-gray-100 text-gray-700 px-2 py-2 rounded font-bold text-xs border border-gray-200 active:bg-gray-200">-5分</button>
+            <p class="text-xs font-bold text-gray-500 mb-3 text-center">② この行動の所要時間を入力してください</p>
+            <div class="flex items-center justify-center space-x-2">
+              <input type="number" id="corrDurationInput" oninput="onCorrDurationInputChange(this.value)" min="0" class="w-32 text-center border-2 border-blue-500 rounded-lg p-2.5 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-blue-300 font-mono">
+              <span class="text-lg font-bold text-gray-600">分</span>
             </div>
-            <div class="text-3xl font-black text-blue-600 text-center my-3"><span id="corrDurationInput">0</span>分</div>
-            <div class="flex items-center justify-center space-x-1">
-              <button onclick="adjustCorrDuration(5)" class="bg-blue-50 text-blue-700 px-2 py-2 rounded font-bold text-xs border border-blue-200 active:bg-blue-100">+5分</button>
-              <button onclick="adjustCorrDuration(20)" class="bg-blue-50 text-blue-700 px-2 py-2 rounded font-bold text-xs border border-blue-200 active:bg-blue-100">+20分</button>
-              <button onclick="adjustCorrDuration(30)" class="bg-blue-50 text-blue-700 px-2 py-2 rounded font-bold text-xs border border-blue-200 active:bg-blue-100">+30分</button>
-            </div>
+            <p class="text-[10px] text-gray-400 text-center mt-2">※ 残り時間（最大 <span id="corrMaxHint">0</span> 分）まで入力可能</p>
           </div>
 
           <div class="mb-4 border-t pt-4">
@@ -624,7 +618,23 @@
     function updateCorrTimeUI() {
       document.getElementById('corrRemainingTime').textContent = corrRemainingTime;
       document.getElementById('corrTotalTime').textContent = corrTotalTime;
-      document.getElementById('corrDurationInput').textContent = corrCurrentAction.duration;
+      document.getElementById('corrMaxHint').textContent = corrRemainingTime;
+      
+      const inputEl = document.getElementById('corrDurationInput');
+      inputEl.value = corrCurrentAction.duration;
+
+      // 「今も継続中」の場合は入力を無効化（disabled）し、残り時間を自動割り当て
+      if (corrCurrentAction.isOngoing) {
+        inputEl.disabled = true;
+        inputEl.classList.add('bg-gray-100', 'text-gray-400');
+        inputEl.classList.remove('border-blue-500');
+        inputEl.classList.add('border-gray-200');
+      } else {
+        inputEl.disabled = false;
+        inputEl.classList.remove('bg-gray-100', 'text-gray-400');
+        inputEl.classList.remove('border-gray-200');
+        inputEl.classList.add('border-blue-500');
+      }
 
       // 「次の行動を入力 / 確定」ボタンの制御
       const btnNext = document.getElementById('btnCorrNext');
@@ -728,9 +738,8 @@
       showCorrStepDetails();
     }
 
-    function adjustCorrDuration(mins) {
-      // 現在の値に加算
-      let targetMins = corrCurrentAction.duration + mins;
+    function onCorrDurationInputChange(value) {
+      let targetMins = parseInt(value) || 0;
       
       // 0未満にはならない
       if (targetMins < 0) targetMins = 0;
@@ -738,6 +747,7 @@
       // 残り時間を超えない
       if (targetMins > corrRemainingTime) {
         targetMins = corrRemainingTime;
+        document.getElementById('corrDurationInput').value = targetMins;
       }
 
       corrCurrentAction.duration = targetMins;
