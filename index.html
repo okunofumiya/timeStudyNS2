@@ -68,25 +68,11 @@
     </div>
   </main>
 
-  <!-- イベントPingエリア（画面下部に常時固定） -->
+  <!-- イベントPingエリア（画面下部に常時固定・部署ごとに動的生成） -->
   <div
     class="fixed bottom-0 w-full bg-white border-t border-gray-200 p-2 pb-6 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-20">
-    <div class="flex justify-around items-center">
-      <button onclick="recordPing('ナースコール')"
-        class="flex flex-col items-center p-2 rounded-lg text-orange-600 active:bg-orange-50 w-1/3">
-        <div class="bg-orange-100 p-3 rounded-full mb-1 shadow-sm">🔔</div>
-        <span class="text-xs font-bold">ナースコール</span>
-      </button>
-      <button onclick="recordPing('人探し')"
-        class="flex flex-col items-center p-2 rounded-lg text-red-600 active:bg-red-50 w-1/3">
-        <div class="bg-red-100 p-3 rounded-full mb-1 shadow-sm">👀</div>
-        <span class="text-xs font-bold">人探し</span>
-      </button>
-      <button onclick="recordPing('突発連携')"
-        class="flex flex-col items-center p-2 rounded-lg text-green-600 active:bg-green-50 w-1/3">
-        <div class="bg-green-100 p-3 rounded-full mb-1 shadow-sm">🗣️</div>
-        <span class="text-xs font-bold">突発連携</span>
-      </button>
+    <div id="eventButtonsContainer" class="flex justify-around items-center">
+      <!-- JSでイベントボタンを自動生成 -->
     </div>
   </div>
 
@@ -94,7 +80,7 @@
   <div id="subCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-30">
     <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl">
       <h3 id="modalTitle" class="text-lg font-bold mb-4 text-center border-b pb-2"></h3>
-      <div id="subCategoryContainer" class="flex flex-col space-y-3">
+      <div id="subCategoryContainer" class="flex flex-col space-y-3 max-h-[60vh] overflow-y-auto">
         <!-- JSで小区分ボタンを自動生成 -->
       </div>
       <button onclick="closeModal()"
@@ -104,7 +90,7 @@
     </div>
   </div>
 
-  <!-- ★追加：イベント所要時間選択モーダル -->
+  <!-- ★イベント所要時間選択モーダル -->
   <div id="durationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-40">
     <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl">
       <h3 id="durationModalTitle" class="text-lg font-bold mb-4 text-center border-b pb-2"></h3>
@@ -130,6 +116,37 @@
     </div>
   </div>
 
+  <!-- ★所属部署・名前設定モーダル -->
+  <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
+    <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl">
+      <h3 class="text-lg font-bold mb-4 text-center border-b pb-2 text-gray-800">部署・名前の設定</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">部署名</label>
+          <select id="userDeptSelect"
+            class="w-full border border-gray-300 rounded-lg p-3 text-sm bg-white font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">部署を選択してください</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">名前（職員名）</label>
+          <input type="text" id="userNameInput" placeholder="例：山田 太郎"
+            class="w-full border border-gray-300 rounded-lg p-3 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+      <div class="mt-6 flex flex-col space-y-2">
+        <button onclick="saveUserModal()"
+          class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow active:bg-blue-700">
+          決定
+        </button>
+        <button onclick="closeUserModal()"
+          class="w-full bg-gray-200 text-gray-700 py-2.5 rounded-lg font-bold text-sm active:bg-gray-300">
+          キャンセル
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- サイドメニュー（ドロワー） -->
   <div id="sideMenuOverlay" onclick="toggleMenu(false)" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 transition-opacity duration-300 opacity-0"></div>
   <div id="sideMenu" class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
@@ -138,6 +155,10 @@
       <button onclick="toggleMenu(false)" class="text-white text-2xl focus:outline-none">×</button>
     </div>
     <div class="flex-1 py-2 overflow-y-auto">
+      <button onclick="toggleMenu(false); openUserModal();" class="w-full text-left px-6 py-4 hover:bg-blue-50 active:bg-blue-100 flex items-center space-x-3 border-b border-gray-100 text-gray-700 font-bold transition-colors">
+        <span class="text-lg">👤</span>
+        <span>部署・名前を変更する</span>
+      </button>
       <button onclick="startCorrection()" class="w-full text-left px-6 py-4 hover:bg-blue-50 active:bg-blue-100 flex items-center space-x-3 border-b border-gray-100 text-gray-700 font-bold transition-colors">
         <span class="text-lg">✏️</span>
         <span>過去の履歴を修正する</span>
@@ -148,7 +169,7 @@
       </button>
     </div>
     <div class="p-4 bg-gray-50 border-t text-[10px] text-gray-400 text-center">
-      タイムスタディ記録 App v1.1.0
+      タイムスタディ記録 App v1.3.0
     </div>
   </div>
 
@@ -229,6 +250,7 @@
        1. マスターデータと状態管理
     ========================================================= */
     let masterDataCache = [];
+    // currentUserCode には「部署名」を格納（スプレッドシート5列目への出力互換性を維持）
     let currentUserCode = localStorage.getItem('ts_userCode') || '';
     let currentUserName = localStorage.getItem('ts_userName') || '';
 
@@ -240,7 +262,7 @@
     });
 
     /* =========================================================
-       1.5. サイドメニューの制御
+       1.5. サイドメニュー・ユーザー設定モーダルの制御
      ========================================================= */
     function toggleMenu(show) {
       const overlay = document.getElementById('sideMenuOverlay');
@@ -262,8 +284,9 @@
 
     function finishWorkAndSend() {
       toggleMenu(false);
-      if (currentUserCode === '未設定' || !currentUserName) {
-        alert('先に職員IDを設定してください。');
+      if (!currentUserCode || currentUserCode === '未設定' || !currentUserName) {
+        alert('先に部署と名前を設定してください。');
+        openUserModal();
         return;
       }
       const statusJson = localStorage.getItem('ts_currentStatus');
@@ -277,38 +300,90 @@
     }
 
     function initUserId() {
-      if (!currentUserCode || !currentUserName) {
-        const code = prompt('職員番号を入力してください');
-        const name = code ? prompt('名前（職員名）を入力してください') : '';
-        if (code && name) {
-          currentUserCode = code;
-          currentUserName = name;
-          localStorage.setItem('ts_userCode', currentUserCode);
-          localStorage.setItem('ts_userName', currentUserName);
-        } else {
-          currentUserCode = '未設定';
-          currentUserName = '';
-        }
-      }
       updateUserDisplay();
-
       const display = document.getElementById('userIdDisplay');
       display.addEventListener('click', () => {
-        const code = prompt('職員番号を変更', currentUserCode === '未設定' ? '' : currentUserCode);
-        const name = code ? prompt('名前（職員名）を変更', currentUserName) : '';
-        if (code && name) {
-          currentUserCode = code;
-          currentUserName = name;
-          localStorage.setItem('ts_userCode', currentUserCode);
-          localStorage.setItem('ts_userName', currentUserName);
-          updateUserDisplay();
-        }
+        openUserModal();
       });
+    }
+
+    function getAvailableDepartments() {
+      return [...new Set(masterDataCache.map(d => d.dept).filter(Boolean))];
+    }
+
+    function populateDeptSelect() {
+      const selectEl = document.getElementById('userDeptSelect');
+      if (!selectEl) return;
+
+      const depts = getAvailableDepartments();
+      selectEl.innerHTML = '';
+
+      if (depts.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = currentUserCode && currentUserCode !== '未設定' ? currentUserCode : '';
+        opt.textContent = opt.value ? `${opt.value}（マスタ読込中...）` : '部署データを読み込み中...';
+        selectEl.appendChild(opt);
+        return;
+      }
+
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = '部署を選択してください';
+      selectEl.appendChild(defaultOpt);
+
+      depts.forEach(dept => {
+        const opt = document.createElement('option');
+        opt.value = dept;
+        opt.textContent = dept;
+        if (dept === currentUserCode) {
+          opt.selected = true;
+        }
+        selectEl.appendChild(opt);
+      });
+    }
+
+    function openUserModal() {
+      populateDeptSelect();
+      const nameInput = document.getElementById('userNameInput');
+      if (nameInput) {
+        nameInput.value = currentUserName || '';
+      }
+      document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('userModal').classList.add('hidden');
+    }
+
+    function saveUserModal() {
+      const selectEl = document.getElementById('userDeptSelect');
+      const nameInput = document.getElementById('userNameInput');
+      const dept = selectEl ? selectEl.value.trim() : '';
+      const name = nameInput ? nameInput.value.trim() : '';
+
+      if (!dept) {
+        alert('部署名を選択してください。');
+        return;
+      }
+      if (!name) {
+        alert('名前（職員名）を入力してください。');
+        return;
+      }
+
+      currentUserCode = dept;
+      currentUserName = name;
+      localStorage.setItem('ts_userCode', currentUserCode);
+      localStorage.setItem('ts_userName', currentUserName);
+
+      updateUserDisplay();
+      renderMainCategories();
+      renderEventButtons();
+      closeUserModal();
     }
 
     function updateUserDisplay() {
       const display = document.getElementById('userIdDisplay');
-      if (currentUserCode === '未設定' || !currentUserName) {
+      if (!currentUserCode || currentUserCode === '未設定' || !currentUserName) {
         display.textContent = '未設定';
       } else {
         display.textContent = `[${currentUserCode}] ${currentUserName}`;
@@ -316,35 +391,83 @@
     }
 
     /* =========================================================
-       2. UI構築処理（マスターデータの読み込み）
+       2. UI構築処理（マスターデータの読み込み・部署別フィルタリング）
     ========================================================= */
+    function getDeptMasterData() {
+      const hasDeptColumn = masterDataCache.some(d => d.dept);
+      if (!hasDeptColumn) {
+        // GAS更新前など、dept列が存在しないキャッシュの場合は全件返す（後方互換性）
+        return masterDataCache;
+      }
+      if (!currentUserCode || currentUserCode === '未設定') {
+        return [];
+      }
+      return masterDataCache.filter(d => d.dept === currentUserCode);
+    }
+
+    function checkUserDeptValidity() {
+      const depts = getAvailableDepartments();
+      // 未設定の場合、または以前の「職員番号」が残っていて有効な部署一覧に含まれていない場合は設定モーダルを開く
+      if (!currentUserCode || currentUserCode === '未設定' || !currentUserName || (depts.length > 0 && !depts.includes(currentUserCode))) {
+        openUserModal();
+      }
+    }
+
     function loadMasterData() {
       const cached = localStorage.getItem('ts_masterData');
       if (cached) {
-        masterDataCache = JSON.parse(cached);
+        try {
+          masterDataCache = JSON.parse(cached);
+        } catch (e) {
+          masterDataCache = [];
+        }
+        populateDeptSelect();
         renderMainCategories();
+        renderEventButtons();
+      } else {
+        renderEventButtons();
       }
 
-      // VercelからGASへアクセスしてデータを取得
+      // GASへアクセスして最新のマスターデータを取得
       fetch(GAS_API_URL)
         .then(response => response.json())
         .then(response => {
           if (response.success && response.data.length > 0) {
             const newDataString = JSON.stringify(response.data);
+            masterDataCache = response.data;
             if (newDataString !== cached) {
-              masterDataCache = response.data;
               localStorage.setItem('ts_masterData', newDataString);
-              renderMainCategories();
             }
+            populateDeptSelect();
+            renderMainCategories();
+            renderEventButtons();
+            checkUserDeptValidity();
+          } else {
+            checkUserDeptValidity();
           }
         })
-        .catch(error => console.log("通信エラー（オフライン）:", error));
+        .catch(error => {
+          console.log("通信エラー（オフライン）:", error);
+          checkUserDeptValidity();
+        });
     }
 
     function renderMainCategories() {
       const container = document.getElementById('mainCategoryContainer');
       container.innerHTML = '';
-      const mainCategories = [...new Set(masterDataCache.map(d => d.main))];
+
+      if (!currentUserCode || currentUserCode === '未設定') {
+        container.innerHTML = '<p class="col-span-2 text-center text-xs text-gray-400 py-6">右上の「未設定」をタップして部署と名前を設定してください</p>';
+        return;
+      }
+
+      const deptData = getDeptMasterData().filter(d => d.main !== 'イベント');
+      const mainCategories = [...new Set(deptData.map(d => d.main))];
+
+      if (mainCategories.length === 0) {
+        container.innerHTML = '<p class="col-span-2 text-center text-xs text-gray-400 py-6">該当する部署の業務項目がありません</p>';
+        return;
+      }
 
       mainCategories.forEach(main => {
         const btn = document.createElement('button');
@@ -355,19 +478,98 @@
       });
     }
 
+    // ★イベント項目の文字列から「先頭の絵文字アイコン」と「ラベル文字」を分離する関数
+    function parseEventItem(rawText) {
+      const str = String(rawText || '').trim();
+      if (!str) return { icon: '⚡️', label: '' };
+
+      let firstCluster = '';
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
+        const iterator = segmenter.segment(str)[Symbol.iterator]();
+        const first = iterator.next();
+        if (!first.done) {
+          firstCluster = first.value.segment;
+        }
+      } else {
+        const match = str.match(/^([\p{Extended_Pictographic}\p{Emoji_Presentation}][\uFE0F\uFE0E]?)/u);
+        if (match) firstCluster = match[1];
+      }
+
+      // 先頭1文字（書記素クラスタ）が絵文字かどうか判定（数字や記号は除外）
+      const isEmoji = firstCluster && /[\p{Extended_Pictographic}\p{Emoji_Presentation}]/u.test(firstCluster) && !/^[0-9#*]$/.test(firstCluster);
+      if (isEmoji) {
+        const label = str.slice(firstCluster.length).trim();
+        return {
+          icon: firstCluster,
+          label: label || str
+        };
+      }
+
+      // 先頭に絵文字がない場合は「⚡️」で統一
+      return {
+        icon: '⚡️',
+        label: str
+      };
+    }
+
+    // ★画面下部のイベントボタンを部署ごとに動的生成
+    function renderEventButtons() {
+      const container = document.getElementById('eventButtonsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const deptData = getDeptMasterData();
+      let eventSubs = deptData.filter(d => d.main === 'イベント' && d.sub).map(d => d.sub);
+
+      // スプレッドシートに「イベント」行が1つもない場合のデフォルト表示
+      if (eventSubs.length === 0) {
+        eventSubs = ['🔔ナースコール', '👀人探し', '🗣️突発連携'];
+      }
+
+      const colorThemes = [
+        { btn: 'text-orange-600 active:bg-orange-50', badge: 'bg-orange-100' },
+        { btn: 'text-red-600 active:bg-red-50', badge: 'bg-red-100' },
+        { btn: 'text-green-600 active:bg-green-50', badge: 'bg-green-100' },
+        { btn: 'text-purple-600 active:bg-purple-50', badge: 'bg-purple-100' },
+        { btn: 'text-blue-600 active:bg-blue-50', badge: 'bg-blue-100' }
+      ];
+
+      eventSubs.forEach((rawSub, idx) => {
+        const { icon, label } = parseEventItem(rawSub);
+        const theme = colorThemes[idx % colorThemes.length];
+
+        const btn = document.createElement('button');
+        btn.className = `flex flex-col items-center p-2 rounded-lg ${theme.btn} flex-1`;
+        btn.onclick = () => recordPing(label);
+
+        const iconDiv = document.createElement('div');
+        iconDiv.className = `${theme.badge} p-3 rounded-full mb-1 shadow-sm`;
+        iconDiv.textContent = icon;
+
+        const span = document.createElement('span');
+        span.className = 'text-xs font-bold';
+        span.textContent = label;
+
+        btn.appendChild(iconDiv);
+        btn.appendChild(span);
+        container.appendChild(btn);
+      });
+    }
+
     /* =========================================================
        3. 記録とステータス表示ロジック
     ========================================================= */
     function handleMainCategoryClick(mainCategory) {
-      const subs = masterDataCache.filter(d => d.main === mainCategory).map(d => d.sub);
+      const subs = getDeptMasterData().filter(d => d.main === mainCategory).map(d => d.sub);
       if (subs.length === 1) {
-        saveRecord(mainCategory, subs[0]);
+        saveRecord(mainCategory, subs[0] || mainCategory);
       } else {
         openSubCategoryModal(mainCategory, subs);
       }
     }
 
-    // ★修正：Pingボタンを押した時は時間入力モーダルを開く
+    // ★Pingボタンを押した時は時間入力モーダルを開く
     let currentPingEvent = '';
     function recordPing(eventName) {
       currentPingEvent = eventName;
@@ -375,7 +577,7 @@
       document.getElementById('durationModal').classList.remove('hidden');
     }
 
-    // ★追加：時間を選択した時の保存処理
+    // ★時間を選択した時の保存処理
     function savePingWithDuration(minutes) {
       saveRecord('イベント', currentPingEvent, minutes);
       closeDurationModal();
@@ -388,7 +590,7 @@
       document.getElementById('durationModal').classList.add('hidden');
     }
 
-    // 小区分モーダルの処理（省略せずに残します）
+    // 小区分モーダルの処理
     function openSubCategoryModal(mainCategory, subs) {
       document.getElementById('modalTitle').textContent = mainCategory + ' の詳細';
       const container = document.getElementById('subCategoryContainer');
@@ -413,10 +615,11 @@
     // 経過時間を計算するタイマー用の変数
     let elapsedTimer = null;
 
-    // saveRecord 関数の修正：直前の業務の終了確定と所要時間計算、イベント即時保存、終業の自動送信
+    // saveRecord 関数：直前の業務の終了確定と所要時間計算、イベント即時保存、終業の自動送信
     function saveRecord(main, sub, duration = '') {
-      if (currentUserCode === '未設定' || !currentUserName) {
-        alert('先に職員IDを設定してください。');
+      if (!currentUserCode || currentUserCode === '未設定' || !currentUserName) {
+        alert('先に部署と名前を設定してください。');
+        openUserModal();
         return;
       }
 
@@ -432,8 +635,8 @@
           endTimestamp: now.toISOString(),
           mainCategory: main,
           subCategory: sub,
-          userCode: currentUserCode,
-          userName: currentUserName,
+          userCode: currentUserCode, // 部署名
+          userName: currentUserName, // 職員名
           duration: durationMins
         };
         records.push(record);
@@ -458,8 +661,8 @@
               endTimestamp: isOverLimit ? new Date(status.startTimeMs).toISOString() : now.toISOString(),
               mainCategory: status.main,
               subCategory: status.sub,
-              userCode: currentUserCode,
-              userName: currentUserName,
+              userCode: currentUserCode, // 部署名
+              userName: currentUserName, // 職員名
               duration: isOverLimit ? 0 : diffMins
             };
             records.push(pastRecord);
@@ -510,7 +713,7 @@
       updateUnsentCount();
     }
 
-    // ★修正：ステータス表示とタイマーの処理
+    // ★ステータス表示とタイマーの処理
     function updateCurrentStatusUI() {
       const statusJson = localStorage.getItem('ts_currentStatus');
       const displayEl = document.getElementById('currentStatusDisplay');
@@ -550,9 +753,6 @@
       }
     }
 
-    /* =========================================================
-       1.6. 過去履歴の手動修正ウィザード
-     ========================================================= */
     /* =========================================================
        1.6. 過去履歴の手動修正ウィザード
      ========================================================= */
@@ -691,11 +891,10 @@
     function renderCorrCategories() {
       const container = document.getElementById('corrCategoryContainer');
       container.innerHTML = '';
-      const mainCategories = [...new Set(masterDataCache.map(d => d.main))];
+      const deptData = getDeptMasterData().filter(d => d.main !== 'イベント');
+      const mainCategories = [...new Set(deptData.map(d => d.main))];
 
       mainCategories.forEach(main => {
-        if (main === 'イベント') return; // イベントはタイムライン除外
-
         const btn = document.createElement('button');
         btn.className = "bg-white p-3 rounded-lg shadow-sm border border-gray-200 text-center font-bold text-xs text-gray-700 active:bg-blue-50 active:border-blue-300";
         btn.textContent = main;
@@ -705,9 +904,9 @@
     }
 
     function handleCorrCategoryClick(mainCategory) {
-      const subs = masterDataCache.filter(d => d.main === mainCategory).map(d => d.sub);
+      const subs = getDeptMasterData().filter(d => d.main === mainCategory).map(d => d.sub);
       if (subs.length === 1) {
-        selectCorrAction(mainCategory, subs[0]);
+        selectCorrAction(mainCategory, subs[0] || mainCategory);
       } else {
         // 小区分リストの表示
         document.getElementById('corrCategoryContainer').classList.add('hidden');
