@@ -46,7 +46,7 @@
     <div
       class="mb-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 text-center shadow-sm">
       <p class="text-xs text-blue-600 font-bold mb-1">現在の記録状態</p>
-      <p id="currentStatusDisplay" class="text-xl font-extrabold text-blue-900 tracking-wide">業務未開始</p>
+      <p id="currentStatusDisplay" class="text-xl font-extrabold text-blue-900 tracking-wide break-words">業務未開始</p>
       <p class="text-xs text-blue-500 mt-2 flex items-center justify-center">
         <span id="currentStatusTime">--:--</span> から継続中
         <span id="elapsedTimeBadge"
@@ -76,21 +76,25 @@
     </div>
   </div>
 
-  <!-- 小区分選択モーダル -->
+  <!-- 中区分・小区分選択モーダル -->
   <div id="subCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-30">
     <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl">
-      <h3 id="modalTitle" class="text-lg font-bold mb-4 text-center border-b pb-2"></h3>
+      <h3 id="modalTitle" class="text-base font-bold mb-4 text-center border-b pb-2 break-words"></h3>
       <div id="subCategoryContainer" class="flex flex-col space-y-3 max-h-[60vh] overflow-y-auto">
-        <!-- JSで小区分ボタンを自動生成 -->
+        <!-- JSで中区分・小区分ボタンを自動生成 -->
       </div>
+      <button id="modalBackBtn"
+        class="hidden mt-4 w-full bg-blue-100 text-blue-700 py-2.5 rounded-lg font-bold text-sm active:bg-blue-200">
+        ← 中区分選択に戻る
+      </button>
       <button onclick="closeModal()"
-        class="mt-6 w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold active:bg-gray-300">
+        class="mt-3 w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold active:bg-gray-300">
         キャンセル
       </button>
     </div>
   </div>
 
-  <!-- ★イベント所要時間選択モーダル -->
+  <!-- ★ケース②：振り返り型イベント所要時間選択モーダル（5分〜30分+） -->
   <div id="durationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-40">
     <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl">
       <h3 id="durationModalTitle" class="text-lg font-bold mb-4 text-center border-b pb-2"></h3>
@@ -113,6 +117,49 @@
         class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold active:bg-gray-300">
         キャンセル
       </button>
+    </div>
+  </div>
+
+  <!-- ★ケース①：割り込み・中断計測型イベントモーダル（ナースコール等） -->
+  <div id="interruptEventModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex justify-center items-center z-40">
+    <div class="bg-white rounded-xl w-11/12 max-w-sm p-5 shadow-2xl">
+      <!-- パネルA：対応中 ＆ 小区分選択 -->
+      <div id="interruptPanelSub">
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4 text-center">
+          <p class="text-xs font-bold text-orange-600 mb-1">現在対応中（計測中）</p>
+          <h3 id="interruptModalTitle" class="text-lg font-extrabold text-orange-800">ナースコール</h3>
+          <p class="text-xs text-orange-600 mt-1 flex items-center justify-center">
+            <span id="interruptStartTime">--:--</span> 開始
+            <span id="interruptElapsedBadge" class="ml-2 bg-orange-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">0分経過</span>
+          </p>
+        </div>
+        <p class="text-xs text-center text-gray-600 font-bold mb-3">対応が終了したら、内容を選択してください</p>
+        <div id="interruptSubContainer" class="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto mb-2">
+          <!-- 小区分ボタン（排泄、誘導、介助、雑事など） -->
+        </div>
+      </div>
+
+      <!-- パネルB：対応完了後、元の業務に戻るか確認 -->
+      <div id="interruptPanelReturn" class="hidden">
+        <h3 class="text-base font-bold mb-3 text-center border-b pb-2 text-gray-800">対応を記録しました</h3>
+        <p class="text-xs text-gray-500 text-center mb-2">中断していた元の業務に戻りますか？</p>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-5 text-center">
+          <p class="text-[10px] text-blue-500 font-bold">中断前の業務</p>
+          <p id="interruptPrevTaskName" class="text-sm font-extrabold text-blue-900 mt-0.5 break-words"></p>
+        </div>
+        <div class="flex flex-col space-y-3">
+          <button onclick="resumePreviousTask(true)"
+            class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold text-sm shadow active:bg-blue-700 flex items-center justify-center space-x-2">
+            <span>🔄</span>
+            <span>はい（元の業務を再開する）</span>
+          </button>
+          <button onclick="resumePreviousTask(false)"
+            class="w-full bg-gray-100 text-gray-700 py-3.5 rounded-xl font-bold text-sm border border-gray-300 active:bg-gray-200 flex items-center justify-center space-x-2">
+            <span>⏩</span>
+            <span>いいえ（別の業務を選択する）</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -169,7 +216,7 @@
       </button>
     </div>
     <div class="p-4 bg-gray-50 border-t text-[10px] text-gray-400 text-center">
-      タイムスタディ記録 App v1.3.0
+      タイムスタディ記録 App v1.5.1
     </div>
   </div>
 
@@ -189,7 +236,7 @@
         
         <!-- パネル 1: 所要時間の入力 -->
         <div id="corrPanelDuration" class="hidden">
-          <p id="corrDurationTitle" class="text-sm font-bold text-gray-700 mb-4 text-center">Aの業務をどれくらい実施しましたか？</p>
+          <p id="corrDurationTitle" class="text-sm font-bold text-gray-700 mb-4 text-center break-words">Aの業務をどれくらい実施しましたか？</p>
           <div class="flex items-center justify-center space-x-2 my-6">
             <input type="number" id="corrDurationInput" min="1" class="w-32 text-center border-2 border-blue-500 rounded-lg p-2.5 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-blue-300 font-mono" placeholder="0">
             <span class="text-lg font-bold text-gray-600">分</span>
@@ -200,24 +247,31 @@
           </div>
         </div>
 
-        <!-- パネル 2: 行動の選択 -->
+        <!-- パネル 2: 行動の選択（大区分 → 中区分 → 小区分） -->
         <div id="corrPanelAction" class="hidden">
           <p class="text-sm font-bold text-gray-700 mb-4 text-center">その後に行った業務はなんですか？</p>
           <div id="corrCategoryContainer" class="grid grid-cols-2 gap-2 mb-4">
             <!-- 大区分ボタン -->
           </div>
+          <div id="corrMidCategoryContainer" class="hidden">
+            <p id="corrMidTitle" class="text-xs font-bold text-gray-500 mb-2 text-center">中区分を選択してください</p>
+            <div id="corrMidCategoryGrid" class="grid grid-cols-2 gap-2 mb-4">
+              <!-- 中区分ボタン -->
+            </div>
+            <button onclick="backToCorrMainCategory()" class="w-full py-2 bg-gray-100 text-gray-600 rounded font-bold text-xs active:bg-gray-200">← 大区分選択に戻る</button>
+          </div>
           <div id="corrSubCategoryContainer" class="hidden">
-            <p class="text-xs font-bold text-gray-400 mb-2 text-center">詳細（小区分）を選択してください</p>
+            <p id="corrSubTitle" class="text-xs font-bold text-gray-500 mb-2 text-center">小区分を選択してください</p>
             <div id="corrSubCategoryGrid" class="grid grid-cols-2 gap-2 mb-4">
               <!-- 小区分ボタン -->
             </div>
-            <button onclick="backToCorrMainCategory()" class="w-full py-2 bg-gray-100 text-gray-600 rounded font-bold text-xs active:bg-gray-200">← 大区分選択に戻る</button>
+            <button onclick="backToCorrMidCategory()" class="w-full py-2 bg-gray-100 text-gray-600 rounded font-bold text-xs active:bg-gray-200">← 中区分選択に戻る</button>
           </div>
         </div>
 
         <!-- パネル 3: 継続の確認 -->
         <div id="corrPanelOngoing" class="hidden">
-          <p id="corrOngoingTitle" class="text-sm font-bold text-gray-700 mb-6 text-center">Bは今も継続中ですか？</p>
+          <p id="corrOngoingTitle" class="text-sm font-bold text-gray-700 mb-6 text-center break-words">Bは今も継続中ですか？</p>
           <div class="flex flex-col space-y-4 px-4 mb-4">
             <button onclick="submitCorrOngoing(true)" class="bg-blue-50 text-blue-700 p-4 rounded-xl font-bold text-sm border border-blue-200 active:bg-blue-100 transition-colors shadow-sm flex items-center justify-center space-x-2">
               <span class="text-lg">🔄</span>
@@ -247,10 +301,51 @@
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyAvJJNmfhXQxW78EkCz-kQq6-oS42fC1c9pD_Di_7fBg0aOxNLDCC8Ow1nVW-aFGjU/exec';
 
     /* =========================================================
+       0. 共通ユーティリティ（JST日時フォーマット・3区分補完・表示整形）
+    ========================================================= */
+    // Dateオブジェクトを日本標準時（JST: YYYY/MM/DD HH:mm:ss）の文字列へ変換
+    function formatJST(dateInput) {
+      const d = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
+      const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+      const yyyy = jst.getUTCFullYear();
+      const mm = String(jst.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(jst.getUTCDate()).padStart(2, '0');
+      const hh = String(jst.getUTCHours()).padStart(2, '0');
+      const mi = String(jst.getUTCMinutes()).padStart(2, '0');
+      const ss = String(jst.getUTCSeconds()).padStart(2, '0');
+      return `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}`;
+    }
+
+    // 大区分・中区分・小区分の自動補完ルール
+    // ・大のみ -> 中＝大, 小＝大
+    // ・大と中のみ -> 小＝中
+    function resolveCategories(main, mid = '', sub = '') {
+      const m1 = String(main || '').trim();
+      const m2 = String(mid || '').trim() || m1;
+      const m3 = String(sub || '').trim() || m2;
+      return { main: m1, mid: m2, sub: m3 };
+    }
+
+    // 画面表示用の業務テキスト整形
+    // ・大のみ（大＝中＝小）: "A"
+    // ・中まで（中＝小）: "A：B"
+    // ・小まで（すべて異なる）: "A ＞ B ＞ C"
+    function formatActionDisplay(main, mid, sub) {
+      const { main: m1, mid: m2, sub: m3 } = resolveCategories(main, mid, sub);
+      if (m1 === m2 && m2 === m3) {
+        return m1;
+      }
+      if (m2 === m3) {
+        return `${m1}：${m2}`;
+      }
+      return `${m1} ＞ ${m2} ＞ ${m3}`;
+    }
+
+    /* =========================================================
        1. マスターデータと状態管理
     ========================================================= */
     let masterDataCache = [];
-    // currentUserCode には「部署名」を格納（スプレッドシート5列目への出力互換性を維持）
+    // currentUserCode には「部署名」を格納
     let currentUserCode = localStorage.getItem('ts_userCode') || '';
     let currentUserName = localStorage.getItem('ts_userName') || '';
 
@@ -258,7 +353,7 @@
       initUserId();
       loadMasterData();
       updateUnsentCount();
-      updateCurrentStatusUI(); // ★起動時に現在のステータスを復元
+      updateCurrentStatusUI(); // ★起動時に現在のステータス（および割り込みイベント状態）を復元
     });
 
     /* =========================================================
@@ -295,7 +390,7 @@
         return;
       }
       if (confirm('本日の業務を終了し、記録を送信しますか？')) {
-        saveRecord('その他', '終業');
+        saveRecord('その他', '終業', '終業');
       }
     }
 
@@ -393,21 +488,38 @@
     /* =========================================================
        2. UI構築処理（マスターデータの読み込み・部署別フィルタリング）
     ========================================================= */
+    function normalizeMasterRow(d) {
+      // 新形式（dept, main, mid, sub）と旧形式（dept, main, sub）の両方に対応
+      if (d.mid !== undefined) {
+        return {
+          dept: String(d.dept || '').trim(),
+          main: String(d.main || '').trim(),
+          mid: String(d.mid || '').trim(),
+          sub: String(d.sub || '').trim()
+        };
+      }
+      return {
+        dept: String(d.dept || '').trim(),
+        main: String(d.main || '').trim(),
+        mid: String(d.sub || '').trim(),
+        sub: ''
+      };
+    }
+
     function getDeptMasterData() {
-      const hasDeptColumn = masterDataCache.some(d => d.dept);
+      const normalized = masterDataCache.map(normalizeMasterRow);
+      const hasDeptColumn = normalized.some(d => d.dept);
       if (!hasDeptColumn) {
-        // GAS更新前など、dept列が存在しないキャッシュの場合は全件返す（後方互換性）
-        return masterDataCache;
+        return normalized;
       }
       if (!currentUserCode || currentUserCode === '未設定') {
         return [];
       }
-      return masterDataCache.filter(d => d.dept === currentUserCode);
+      return normalized.filter(d => d.dept === currentUserCode);
     }
 
     function checkUserDeptValidity() {
       const depts = getAvailableDepartments();
-      // 未設定の場合、または以前の「職員番号」が残っていて有効な部署一覧に含まれていない場合は設定モーダルを開く
       if (!currentUserCode || currentUserCode === '未設定' || !currentUserName || (depts.length > 0 && !depts.includes(currentUserCode))) {
         openUserModal();
       }
@@ -514,17 +626,40 @@
     }
 
     // ★画面下部のイベントボタンを部署ごとに動的生成
+    // ・D列（小区分）があるイベント -> ケース①：割り込み・中断計測型（ナースコール等）
+    // ・D列（小区分）が空白のイベント -> ケース②：振り返り・時間選択型（人探し等）
     function renderEventButtons() {
       const container = document.getElementById('eventButtonsContainer');
       if (!container) return;
       container.innerHTML = '';
 
       const deptData = getDeptMasterData();
-      let eventSubs = deptData.filter(d => d.main === 'イベント' && d.sub).map(d => d.sub);
+      const eventRows = deptData.filter(d => d.main === 'イベント' && (d.mid || d.sub));
 
-      // スプレッドシートに「イベント」行が1つもない場合のデフォルト表示
-      if (eventSubs.length === 0) {
-        eventSubs = ['🔔ナースコール', '👀人探し', '🗣️突発連携'];
+      // C列（中区分）単位でグループ化し、それに紐づくD列（小区分）の配列をまとめる
+      const eventGroups = [];
+      const groupMap = new Map();
+
+      if (eventRows.length > 0) {
+        eventRows.forEach(row => {
+          const rawMid = row.mid || row.sub;
+          if (!groupMap.has(rawMid)) {
+            const group = { rawMid: rawMid, subs: [] };
+            groupMap.set(rawMid, group);
+            eventGroups.push(group);
+          }
+          if (row.mid && row.sub) {
+            const group = groupMap.get(rawMid);
+            if (!group.subs.includes(row.sub)) {
+              group.subs.push(row.sub);
+            }
+          }
+        });
+      } else {
+        // スプレッドシートに「イベント」行が1つもない場合のデフォルト表示
+        ['🔔ナースコール', '👀人探し', '🗣️突発連携'].forEach(rawMid => {
+          eventGroups.push({ rawMid: rawMid, subs: [] });
+        });
       }
 
       const colorThemes = [
@@ -535,13 +670,21 @@
         { btn: 'text-blue-600 active:bg-blue-50', badge: 'bg-blue-100' }
       ];
 
-      eventSubs.forEach((rawSub, idx) => {
-        const { icon, label } = parseEventItem(rawSub);
+      eventGroups.forEach((group, idx) => {
+        const { icon, label } = parseEventItem(group.rawMid);
         const theme = colorThemes[idx % colorThemes.length];
 
         const btn = document.createElement('button');
         btn.className = `flex flex-col items-center p-2 rounded-lg ${theme.btn} flex-1`;
-        btn.onclick = () => recordPing(label);
+        btn.onclick = () => {
+          if (group.subs.length > 0) {
+            // ケース①：小区分がある場合は「割り込み・中断計測型」を起動
+            startInterruptEvent(label, group.subs);
+          } else {
+            // ケース②：小区分が空白の場合は従来通り「振り返り・所要時間選択モーダル」を起動
+            recordPing(label);
+          }
+        };
 
         const iconDiv = document.createElement('div');
         iconDiv.className = `${theme.badge} p-3 rounded-full mb-1 shadow-sm`;
@@ -558,28 +701,116 @@
     }
 
     /* =========================================================
-       3. 記録とステータス表示ロジック
+       3. 記録とステータス表示ロジック（3区分 ＆ 2種類のイベント対応）
     ========================================================= */
+    // 大区分ボタンを押した時の処理
     function handleMainCategoryClick(mainCategory) {
-      const subs = getDeptMasterData().filter(d => d.main === mainCategory).map(d => d.sub);
-      if (subs.length === 1) {
-        saveRecord(mainCategory, subs[0] || mainCategory);
+      const rows = getDeptMasterData().filter(d => d.main === mainCategory);
+      if (rows.length === 0) {
+        saveRecord(mainCategory, '', '');
+        return;
+      }
+
+      // その大区分に紐づく行が1行のみの場合（大のみ / 大・中のみ1種類 / 大・中・小が1種類ずつ）は即計測開始
+      if (rows.length === 1) {
+        saveRecord(mainCategory, rows[0].mid, rows[0].sub);
+        return;
+      }
+
+      // 複数行ある場合は、中区分が1種類だけでも順番通りに中区分選択モーダルを表示
+      const mids = [...new Set(rows.map(r => r.mid).filter(Boolean))];
+      if (mids.length === 0) {
+        saveRecord(mainCategory, '', '');
       } else {
-        openSubCategoryModal(mainCategory, subs);
+        openMidCategoryModal(mainCategory, mids);
       }
     }
 
-    // ★Pingボタンを押した時は時間入力モーダルを開く
+    // 中区分選択モーダルを開く
+    function openMidCategoryModal(mainCategory, mids) {
+      document.getElementById('modalTitle').textContent = `${mainCategory}（中区分）`;
+      const container = document.getElementById('subCategoryContainer');
+      const backBtn = document.getElementById('modalBackBtn');
+      backBtn.classList.add('hidden');
+      container.innerHTML = '';
+
+      mids.forEach(mid => {
+        const btn = document.createElement('button');
+        btn.className = "bg-blue-50 text-blue-700 p-3 rounded-lg font-bold border border-blue-200 active:bg-blue-100";
+        btn.textContent = mid;
+        btn.onclick = () => handleMidCategoryClick(mainCategory, mid);
+        container.appendChild(btn);
+      });
+
+      document.getElementById('subCategoryModal').classList.remove('hidden');
+    }
+
+    // 中区分ボタンを押した時の処理
+    function handleMidCategoryClick(mainCategory, midCategory) {
+      const subRows = getDeptMasterData().filter(d => d.main === mainCategory && d.mid === midCategory);
+      const subs = [...new Set(subRows.map(r => r.sub).filter(Boolean))];
+
+      // 小区分が空欄、または1種類だけの場合は中区分ボタンを押した時点で即計測開始
+      if (subs.length === 0) {
+        closeModal();
+        saveRecord(mainCategory, midCategory, '');
+      } else if (subs.length === 1) {
+        closeModal();
+        saveRecord(mainCategory, midCategory, subs[0]);
+      } else {
+        // 小区分が複数ある場合は小区分選択モーダルへ切り替え
+        openSubCategoryModal(mainCategory, midCategory, subs);
+      }
+    }
+
+    // 小区分選択モーダルを開く
+    function openSubCategoryModal(mainCategory, midCategory, subs) {
+      document.getElementById('modalTitle').textContent = `${mainCategory} ＞ ${midCategory}`;
+      const container = document.getElementById('subCategoryContainer');
+      const backBtn = document.getElementById('modalBackBtn');
+      container.innerHTML = '';
+
+      subs.forEach(sub => {
+        const btn = document.createElement('button');
+        btn.className = "bg-indigo-50 text-indigo-700 p-3 rounded-lg font-bold border border-indigo-200 active:bg-indigo-100";
+        btn.textContent = sub;
+        btn.onclick = () => {
+          closeModal();
+          saveRecord(mainCategory, midCategory, sub);
+        };
+        container.appendChild(btn);
+      });
+
+      // 「← 中区分選択に戻る」ボタンを表示
+      const mids = [...new Set(getDeptMasterData().filter(d => d.main === mainCategory).map(r => r.mid).filter(Boolean))];
+      backBtn.onclick = () => openMidCategoryModal(mainCategory, mids);
+      backBtn.classList.remove('hidden');
+
+      document.getElementById('subCategoryModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('subCategoryModal').classList.add('hidden');
+    }
+
+    /* ---------------------------------------------------------
+       ケース②：振り返り・内数型イベント（D列が空白：人探し・突発連携など）
+       ボタンを押した時点でかかった時間（5分〜30分+）を選択し、進行中業務は継続
+    --------------------------------------------------------- */
     let currentPingEvent = '';
     function recordPing(eventName) {
+      if (!currentUserCode || currentUserCode === '未設定' || !currentUserName) {
+        alert('先に部署と名前を設定してください。');
+        openUserModal();
+        return;
+      }
       currentPingEvent = eventName;
       document.getElementById('durationModalTitle').textContent = eventName + ' の記録';
       document.getElementById('durationModal').classList.remove('hidden');
     }
 
-    // ★時間を選択した時の保存処理
     function savePingWithDuration(minutes) {
-      saveRecord('イベント', currentPingEvent, minutes);
+      saveRecord('イベント', currentPingEvent, currentPingEvent, minutes);
       closeDurationModal();
       // 保存したことが視覚的に分かるように画面を一瞬光らせる
       document.body.style.backgroundColor = '#fff7ed';
@@ -590,33 +821,16 @@
       document.getElementById('durationModal').classList.add('hidden');
     }
 
-    // 小区分モーダルの処理
-    function openSubCategoryModal(mainCategory, subs) {
-      document.getElementById('modalTitle').textContent = mainCategory + ' の詳細';
-      const container = document.getElementById('subCategoryContainer');
-      container.innerHTML = '';
-      subs.forEach(sub => {
-        const btn = document.createElement('button');
-        btn.className = "bg-blue-50 text-blue-700 p-3 rounded-lg font-bold border border-blue-200 active:bg-blue-100";
-        btn.textContent = sub;
-        btn.onclick = () => {
-          saveRecord(mainCategory, sub);
-          closeModal();
-        };
-        container.appendChild(btn);
-      });
-      document.getElementById('subCategoryModal').classList.remove('hidden');
-    }
+    /* ---------------------------------------------------------
+       ケース①：割り込み・中断計測型イベント（D列に小区分あり：ナースコールなど）
+       1. 押した時点で今の業務を終了確定し、イベントの計測を開始
+       2. 対応終了後に小区分（排泄・誘導など）を押してイベント時間を確定記録
+       3. 元の業務に戻るか、別の業務に移るかを選択
+    --------------------------------------------------------- */
+    let interruptTimer = null;
+    let pendingPreviousTask = null;
 
-    function closeModal() {
-      document.getElementById('subCategoryModal').classList.add('hidden');
-    }
-
-    // 経過時間を計算するタイマー用の変数
-    let elapsedTimer = null;
-
-    // saveRecord 関数：直前の業務の終了確定と所要時間計算、イベント即時保存、終業の自動送信
-    function saveRecord(main, sub, duration = '') {
+    function startInterruptEvent(eventLabel, subs) {
       if (!currentUserCode || currentUserCode === '未設定' || !currentUserName) {
         alert('先に部署と名前を設定してください。');
         openUserModal();
@@ -625,16 +839,182 @@
 
       const now = new Date();
       let records = JSON.parse(localStorage.getItem('ts_records') || '[]');
+      let previousTask = null;
 
-      // A. イベント（ナースコールなど）の場合：即時保存、現在のステータスは変更しない
-      if (main === 'イベント') {
+      // 1. 現在進行中の業務があれば終了確定して保存し、元の業務として記憶する
+      const statusJson = localStorage.getItem('ts_currentStatus');
+      if (statusJson) {
+        try {
+          const status = JSON.parse(statusJson);
+          if (status.startTimeMs) {
+            const diffMs = now.getTime() - status.startTimeMs;
+            const diffMins = Math.floor(diffMs / 60000);
+            const isOverLimit = diffMins >= 240;
+            const prevResolved = resolveCategories(status.main, status.mid || status.sub, status.sub);
+
+            const pastRecord = {
+              timestamp: formatJST(new Date(status.startTimeMs)),
+              endTimestamp: isOverLimit ? formatJST(new Date(status.startTimeMs)) : formatJST(now),
+              mainCategory: prevResolved.main,
+              midCategory: prevResolved.mid,
+              subCategory: prevResolved.sub,
+              userCode: currentUserCode,
+              userName: currentUserName,
+              duration: isOverLimit ? 0 : diffMins
+            };
+            records.push(pastRecord);
+
+            // 直前の業務が割り込みイベントでなければ「元の業務」として保持
+            if (!status.isInterruptEvent) {
+              previousTask = {
+                main: prevResolved.main,
+                mid: prevResolved.mid,
+                sub: prevResolved.sub
+              };
+            } else if (status.previousTask) {
+              previousTask = status.previousTask;
+            }
+          }
+        } catch (e) {
+          console.error("割り込み前の業務クローズ処理エラー:", e);
+        }
+      }
+
+      // 2. 割り込みイベントを現在のステータスとして計測開始
+      const interruptStatus = {
+        main: 'イベント',
+        mid: eventLabel,
+        sub: '対応中',
+        timeText: now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+        startTimeMs: now.getTime(),
+        isInterruptEvent: true,
+        eventLabel: eventLabel,
+        eventSubs: subs,
+        previousTask: previousTask
+      };
+
+      localStorage.setItem('ts_currentStatus', JSON.stringify(interruptStatus));
+      localStorage.setItem('ts_records', JSON.stringify(records));
+
+      updateCurrentStatusUI();
+      updateUnsentCount();
+      openInterruptModal(interruptStatus);
+    }
+
+    function openInterruptModal(status) {
+      document.getElementById('interruptPanelSub').classList.remove('hidden');
+      document.getElementById('interruptPanelReturn').classList.add('hidden');
+
+      document.getElementById('interruptModalTitle').textContent = status.eventLabel;
+      document.getElementById('interruptStartTime').textContent = status.timeText;
+
+      const subContainer = document.getElementById('interruptSubContainer');
+      subContainer.innerHTML = '';
+
+      (status.eventSubs || []).forEach(sub => {
+        const btn = document.createElement('button');
+        btn.className = "bg-orange-50 text-orange-700 p-4 rounded-xl font-bold text-sm border border-orange-200 active:bg-orange-100 shadow-sm";
+        btn.textContent = sub;
+        btn.onclick = () => finishInterruptEvent(sub);
+        subContainer.appendChild(btn);
+      });
+
+      // モーダル内の経過時間タイマーを更新
+      if (interruptTimer) clearInterval(interruptTimer);
+      const badgeEl = document.getElementById('interruptElapsedBadge');
+      const updateModalTimer = () => {
+        const diffMs = new Date().getTime() - status.startTimeMs;
+        const diffMins = Math.floor(diffMs / 60000);
+        badgeEl.textContent = `${diffMins}分経過`;
+      };
+      updateModalTimer();
+      interruptTimer = setInterval(updateModalTimer, 1000);
+
+      document.getElementById('interruptEventModal').classList.remove('hidden');
+    }
+
+    // ナースコール等の対応終了時に小区分ボタンを押したときの処理
+    function finishInterruptEvent(selectedSub) {
+      if (interruptTimer) clearInterval(interruptTimer);
+
+      const statusJson = localStorage.getItem('ts_currentStatus');
+      if (!statusJson) {
+        document.getElementById('interruptEventModal').classList.add('hidden');
+        return;
+      }
+
+      const status = JSON.parse(statusJson);
+      const endNow = new Date();
+      const diffMs = endNow.getTime() - status.startTimeMs;
+      const diffMins = Math.floor(diffMs / 60000);
+      const isOverLimit = diffMins >= 240;
+
+      // イベント（ナースコール ＞ 排泄 など）のレコードを確定保存
+      let records = JSON.parse(localStorage.getItem('ts_records') || '[]');
+      const eventRecord = {
+        timestamp: formatJST(new Date(status.startTimeMs)),
+        endTimestamp: isOverLimit ? formatJST(new Date(status.startTimeMs)) : formatJST(endNow),
+        mainCategory: 'イベント',
+        midCategory: status.eventLabel,
+        subCategory: selectedSub,
+        userCode: currentUserCode,
+        userName: currentUserName,
+        duration: isOverLimit ? 0 : diffMins
+      };
+      records.push(eventRecord);
+      localStorage.setItem('ts_records', JSON.stringify(records));
+
+      pendingPreviousTask = status.previousTask || null;
+      localStorage.removeItem('ts_currentStatus');
+      updateCurrentStatusUI();
+      updateUnsentCount();
+
+      // 元の業務がある場合は「元の業務に戻りますか？」パネルを表示
+      if (pendingPreviousTask && pendingPreviousTask.main) {
+        const prevText = formatActionDisplay(pendingPreviousTask.main, pendingPreviousTask.mid, pendingPreviousTask.sub);
+        document.getElementById('interruptPrevTaskName').textContent = prevText;
+        document.getElementById('interruptPanelSub').classList.add('hidden');
+        document.getElementById('interruptPanelReturn').classList.remove('hidden');
+      } else {
+        // 元の業務がない場合（業務未開始から押した場合）はそのままメイン画面へ戻る
+        document.getElementById('interruptEventModal').classList.add('hidden');
+      }
+    }
+
+    // 「元の業務に戻りますか？」で［はい / いいえ］を選択したときの処理
+    function resumePreviousTask(shouldResume) {
+      document.getElementById('interruptEventModal').classList.add('hidden');
+      if (shouldResume && pendingPreviousTask) {
+        saveRecord(pendingPreviousTask.main, pendingPreviousTask.mid, pendingPreviousTask.sub);
+      }
+      pendingPreviousTask = null;
+    }
+
+    // 経過時間を計算するタイマー用の変数
+    let elapsedTimer = null;
+
+    // saveRecord 関数：最後のボタンを押した時点(now)を開始時刻としてJST保存、3区分自動補完
+    function saveRecord(main, mid = '', sub = '', duration = '') {
+      if (!currentUserCode || currentUserCode === '未設定' || !currentUserName) {
+        alert('先に部署と名前を設定してください。');
+        openUserModal();
+        return;
+      }
+
+      const { main: finalMain, mid: finalMid, sub: finalSub } = resolveCategories(main, mid, sub);
+      const now = new Date();
+      let records = JSON.parse(localStorage.getItem('ts_records') || '[]');
+
+      // A. ケース②：振り返り型イベント（人探しなど）の場合：即時保存、現在のステータスは変更しない
+      if (finalMain === 'イベント') {
         const durationMins = parseInt(duration) || 0;
         const startTimestamp = new Date(now.getTime() - durationMins * 60000);
         const record = {
-          timestamp: startTimestamp.toISOString(),
-          endTimestamp: now.toISOString(),
-          mainCategory: main,
-          subCategory: sub,
+          timestamp: formatJST(startTimestamp),
+          endTimestamp: formatJST(now),
+          mainCategory: finalMain,
+          midCategory: finalMid,
+          subCategory: finalSub,
           userCode: currentUserCode, // 部署名
           userName: currentUserName, // 職員名
           duration: durationMins
@@ -655,12 +1035,14 @@
             const diffMs = now.getTime() - status.startTimeMs;
             const diffMins = Math.floor(diffMs / 60000);
             const isOverLimit = diffMins >= 240; // 4時間（240分）以上空いた場合は異常値とみなす
+            const prevResolved = resolveCategories(status.main, status.mid || status.sub, status.sub);
 
             const pastRecord = {
-              timestamp: new Date(status.startTimeMs).toISOString(),
-              endTimestamp: isOverLimit ? new Date(status.startTimeMs).toISOString() : now.toISOString(),
-              mainCategory: status.main,
-              subCategory: status.sub,
+              timestamp: formatJST(new Date(status.startTimeMs)),
+              endTimestamp: isOverLimit ? formatJST(new Date(status.startTimeMs)) : formatJST(now),
+              mainCategory: prevResolved.main,
+              midCategory: prevResolved.mid,
+              subCategory: prevResolved.sub,
               userCode: currentUserCode, // 部署名
               userName: currentUserName, // 職員名
               duration: isOverLimit ? 0 : diffMins
@@ -673,13 +1055,13 @@
       }
 
       // 2. 「その他 ＞ 終業」の場合の特別処理（自動送信）
-      if (main === 'その他' && sub === '終業') {
-        // 「終業」自体のレコード（所要時間0）を保存
+      if (finalMain === 'その他' && (finalMid === '終業' || finalSub === '終業')) {
         const endRecord = {
-          timestamp: now.toISOString(),
-          endTimestamp: now.toISOString(),
-          mainCategory: main,
-          subCategory: sub,
+          timestamp: formatJST(now),
+          endTimestamp: formatJST(now),
+          mainCategory: finalMain,
+          midCategory: finalMid,
+          subCategory: finalSub,
           userCode: currentUserCode,
           userName: currentUserName,
           duration: 0
@@ -699,10 +1081,11 @@
         return;
       }
 
-      // 3. 新しい業務を現在のステータスに設定
+      // 3. 新しい業務を現在のステータスに設定（最後のボタンを押した時刻 now を開始時刻として記録）
       const status = {
-        main: main,
-        sub: sub,
+        main: finalMain,
+        mid: finalMid,
+        sub: finalSub,
         timeText: now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
         startTimeMs: now.getTime()
       };
@@ -725,7 +1108,7 @@
 
       if (statusJson) {
         const status = JSON.parse(statusJson);
-        const displayText = (status.main === status.sub) ? status.main : `${status.main}：${status.sub}`;
+        const displayText = formatActionDisplay(status.main, status.mid || status.sub, status.sub);
 
         displayEl.textContent = displayText;
         timeEl.textContent = status.timeText;
@@ -746,6 +1129,11 @@
           // スリープ復帰のズレを防ぐため、1秒(1000ms)ごとに差分計算だけを回し続ける
           elapsedTimer = setInterval(updateTimer, 1000);
         }
+
+        // もし割り込みイベント対応中にリロードされた場合はモーダルを再表示
+        if (status.isInterruptEvent) {
+          openInterruptModal(status);
+        }
       } else {
         displayEl.textContent = '業務未開始';
         timeEl.textContent = '--:--';
@@ -754,12 +1142,13 @@
     }
 
     /* =========================================================
-       1.6. 過去履歴の手動修正ウィザード
+       1.6. 過去履歴の手動修正ウィザード（3区分対応）
      ========================================================= */
     let corrTotalTime = 0;
     let corrRemainingTime = 0;
     let corrRecords = [];
-    let corrCurrentAction = { main: '', sub: '', duration: 0, isOngoing: false };
+    let corrCurrentAction = { main: '', mid: '', sub: '', duration: 0, isOngoing: false };
+    let corrSelectedMain = '';
     let corrStartTimeMs = 0;
 
     function startCorrection() {
@@ -793,10 +1182,12 @@
       corrRemainingTime = diffMins;
       corrRecords = [];
       
-      // 1つ目の行動は、現在記録中の行動（status.main, status.sub）で固定して開始する
+      // 1つ目の行動は、現在記録中の行動で固定して開始する
+      const resolved = resolveCategories(status.main, status.mid || status.sub, status.sub);
       corrCurrentAction = {
-        main: status.main,
-        sub: status.sub,
+        main: resolved.main,
+        mid: resolved.mid,
+        sub: resolved.sub,
         duration: 0,
         isOngoing: false
       };
@@ -812,9 +1203,7 @@
       showPanel('corrPanelDuration');
       
       // 入力欄のタイトルを設定
-      const actionName = (corrCurrentAction.main === corrCurrentAction.sub)
-        ? corrCurrentAction.main
-        : `${corrCurrentAction.main}：${corrCurrentAction.sub}`;
+      const actionName = formatActionDisplay(corrCurrentAction.main, corrCurrentAction.mid, corrCurrentAction.sub);
       document.getElementById('corrDurationTitle').textContent = `「${actionName}」の業務をどれくらい実施しましたか？`;
 
       // 数値入力フィールドを初期化
@@ -828,12 +1217,9 @@
     }
 
     function showPanel(panelId) {
-      // すべてのパネルを非表示にする
       document.getElementById('corrPanelDuration').classList.add('hidden');
       document.getElementById('corrPanelAction').classList.add('hidden');
       document.getElementById('corrPanelOngoing').classList.add('hidden');
-      
-      // 指定のパネルを表示する
       document.getElementById(panelId).classList.remove('hidden');
     }
 
@@ -865,6 +1251,7 @@
       // 一時配列に保存
       corrRecords.push({
         main: corrCurrentAction.main,
+        mid: corrCurrentAction.mid,
         sub: corrCurrentAction.sub,
         duration: corrCurrentAction.duration,
         isOngoing: corrCurrentAction.isOngoing
@@ -872,7 +1259,6 @@
 
       // 残り時間が0になった場合は、最後の行動として強制終了
       if (corrRemainingTime <= 0) {
-        // 残り時間0になったので、この行動が「今も継続中」扱いとして確定保存
         corrRecords[corrRecords.length - 1].isOngoing = true;
         saveCorrRecords();
         closeCorrModal();
@@ -883,6 +1269,7 @@
       showPanel('corrPanelAction');
       
       // カテゴリ選択画面の初期化
+      document.getElementById('corrMidCategoryContainer').classList.add('hidden');
       document.getElementById('corrSubCategoryContainer').classList.add('hidden');
       document.getElementById('corrCategoryContainer').classList.remove('hidden');
       renderCorrCategories();
@@ -904,20 +1291,60 @@
     }
 
     function handleCorrCategoryClick(mainCategory) {
-      const subs = getDeptMasterData().filter(d => d.main === mainCategory).map(d => d.sub);
-      if (subs.length === 1) {
-        selectCorrAction(mainCategory, subs[0] || mainCategory);
+      corrSelectedMain = mainCategory;
+      const rows = getDeptMasterData().filter(d => d.main === mainCategory);
+      if (rows.length === 0) {
+        selectCorrAction(mainCategory, '', '');
+        return;
+      }
+      if (rows.length === 1) {
+        selectCorrAction(mainCategory, rows[0].mid, rows[0].sub);
+        return;
+      }
+
+      const mids = [...new Set(rows.map(r => r.mid).filter(Boolean))];
+      if (mids.length === 0) {
+        selectCorrAction(mainCategory, '', '');
+        return;
+      }
+
+      // 中区分リストの表示
+      document.getElementById('corrCategoryContainer').classList.add('hidden');
+      document.getElementById('corrSubCategoryContainer').classList.add('hidden');
+      document.getElementById('corrMidTitle').textContent = `${mainCategory}（中区分）を選択してください`;
+      const container = document.getElementById('corrMidCategoryGrid');
+      container.innerHTML = '';
+
+      mids.forEach(mid => {
+        const btn = document.createElement('button');
+        btn.className = "bg-blue-50 text-blue-700 p-2.5 rounded-lg font-bold border border-blue-200 text-xs active:bg-blue-100";
+        btn.textContent = mid;
+        btn.onclick = () => handleCorrMidCategoryClick(mainCategory, mid);
+        container.appendChild(btn);
+      });
+      document.getElementById('corrMidCategoryContainer').classList.remove('hidden');
+    }
+
+    function handleCorrMidCategoryClick(mainCategory, midCategory) {
+      const subRows = getDeptMasterData().filter(d => d.main === mainCategory && d.mid === midCategory);
+      const subs = [...new Set(subRows.map(r => r.sub).filter(Boolean))];
+
+      if (subs.length === 0) {
+        selectCorrAction(mainCategory, midCategory, '');
+      } else if (subs.length === 1) {
+        selectCorrAction(mainCategory, midCategory, subs[0]);
       } else {
         // 小区分リストの表示
-        document.getElementById('corrCategoryContainer').classList.add('hidden');
+        document.getElementById('corrMidCategoryContainer').classList.add('hidden');
+        document.getElementById('corrSubTitle').textContent = `${mainCategory} ＞ ${midCategory}（小区分）を選択してください`;
         const container = document.getElementById('corrSubCategoryGrid');
         container.innerHTML = '';
-        
+
         subs.forEach(sub => {
           const btn = document.createElement('button');
-          btn.className = "bg-blue-50 text-blue-700 p-2.5 rounded-lg font-bold border border-blue-200 text-xs active:bg-blue-100";
+          btn.className = "bg-indigo-50 text-indigo-700 p-2.5 rounded-lg font-bold border border-indigo-200 text-xs active:bg-indigo-100";
           btn.textContent = sub;
-          btn.onclick = () => selectCorrAction(mainCategory, sub);
+          btn.onclick = () => selectCorrAction(mainCategory, midCategory, sub);
           container.appendChild(btn);
         });
         document.getElementById('corrSubCategoryContainer').classList.remove('hidden');
@@ -925,21 +1352,29 @@
     }
 
     function backToCorrMainCategory() {
+      document.getElementById('corrMidCategoryContainer').classList.add('hidden');
       document.getElementById('corrSubCategoryContainer').classList.add('hidden');
       document.getElementById('corrCategoryContainer').classList.remove('hidden');
     }
 
-    // 「行動の選択」パネルで小区分まで選択されたときの処理
-    function selectCorrAction(main, sub) {
+    function backToCorrMidCategory() {
+      document.getElementById('corrSubCategoryContainer').classList.add('hidden');
+      document.getElementById('corrMidCategoryContainer').classList.remove('hidden');
+    }
+
+    // 「行動の選択」パネルで行動が確定したときの処理
+    function selectCorrAction(main, mid, sub) {
+      const resolved = resolveCategories(main, mid, sub);
       corrCurrentAction = {
-        main: main,
-        sub: sub,
+        main: resolved.main,
+        mid: resolved.mid,
+        sub: resolved.sub,
         duration: 0,
         isOngoing: false
       };
 
       // 終業の場合はその場で即完了扱い
-      if (main === 'その他' && sub === '終業') {
+      if (resolved.main === 'その他' && (resolved.mid === '終業' || resolved.sub === '終業')) {
         corrCurrentAction.isOngoing = true;
         corrCurrentAction.duration = corrRemainingTime;
         corrRemainingTime = 0;
@@ -950,7 +1385,7 @@
       }
 
       // 「継続の確認」パネルへ遷移
-      const actionName = (main === sub) ? main : `${main}：${sub}`;
+      const actionName = formatActionDisplay(resolved.main, resolved.mid, resolved.sub);
       document.getElementById('corrOngoingTitle').textContent = `「${actionName}」は今も継続中ですか？`;
       showPanel('corrPanelOngoing');
     }
@@ -958,7 +1393,6 @@
     // 「継続の確認」パネルでの［はい / いいえ］クリック処理
     function submitCorrOngoing(isOngoing) {
       if (isOngoing) {
-        // 「はい（今も継続中）」の場合：残り時間すべてを割り当てて終了
         corrCurrentAction.isOngoing = true;
         corrCurrentAction.duration = corrRemainingTime;
         corrRemainingTime = 0;
@@ -967,16 +1401,12 @@
         saveCorrRecords();
         closeCorrModal();
       } else {
-        // 「いいえ」の場合：所要時間の入力パネルへ遷移
         corrCurrentAction.isOngoing = false;
         showPanel('corrPanelDuration');
 
-        const actionName = (corrCurrentAction.main === corrCurrentAction.sub)
-          ? corrCurrentAction.main
-          : `${corrCurrentAction.main}：${corrCurrentAction.sub}`;
+        const actionName = formatActionDisplay(corrCurrentAction.main, corrCurrentAction.mid, corrCurrentAction.sub);
         document.getElementById('corrDurationTitle').textContent = `「${actionName}」をどれくらい実施しましたか？`;
 
-        // 数値入力フィールドをリセット
         const inputEl = document.getElementById('corrDurationInput');
         inputEl.value = '';
         inputEl.placeholder = `最大 ${corrRemainingTime}`;
@@ -991,31 +1421,32 @@
       // 遡って開始時刻と終了時刻を決定しながら、レコードに変換
       for (let i = 0; i < corrRecords.length; i++) {
         const item = corrRecords[i];
+        const resolved = resolveCategories(item.main, item.mid, item.sub);
         const startMs = currentMs;
         const endMs = startMs + item.duration * 60000;
         currentMs = endMs;
 
         const record = {
-          timestamp: new Date(startMs).toISOString(),
-          endTimestamp: new Date(endMs).toISOString(),
-          mainCategory: item.main,
-          subCategory: item.sub,
+          timestamp: formatJST(new Date(startMs)),
+          endTimestamp: formatJST(new Date(endMs)),
+          mainCategory: resolved.main,
+          midCategory: resolved.mid,
+          subCategory: resolved.sub,
           userCode: currentUserCode,
           userName: currentUserName,
           duration: item.duration
         };
 
         if (item.isOngoing) {
-          // 「今も継続中」のものは送信対象レコードには直接保存せず、新しい現在のステータスにする
           const status = {
-            main: item.main,
-            sub: item.sub,
+            main: resolved.main,
+            mid: resolved.mid,
+            sub: resolved.sub,
             timeText: new Date(startMs).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
             startTimeMs: startMs
           };
           
-          // もし「終業」であれば送信待ちレコードに格納してステータスをクリア
-          if (item.main === 'その他' && item.sub === '終業') {
+          if (resolved.main === 'その他' && (resolved.mid === '終業' || resolved.sub === '終業')) {
             records.push(record);
             localStorage.removeItem('ts_currentStatus');
             setTimeout(() => {
@@ -1025,7 +1456,6 @@
             localStorage.setItem('ts_currentStatus', JSON.stringify(status));
           }
         } else {
-          // 終了した行動は送信待ちレコードに蓄積
           records.push(record);
         }
       }
@@ -1054,9 +1484,16 @@
         if (previewArea) {
           previewArea.innerHTML = '';
           records.slice(-3).reverse().forEach(r => {
-            const time = new Date(r.timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            // JST文字列（"YYYY/MM/DD HH:mm:ss"）またはISO文字列から時刻部分を取得
+            let time = '';
+            if (typeof r.timestamp === 'string' && r.timestamp.includes(' ')) {
+              time = r.timestamp.split(' ')[1];
+            } else {
+              time = new Date(r.timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+            const label = formatActionDisplay(r.mainCategory, r.midCategory || r.subCategory, r.subCategory);
             const li = document.createElement('li');
-            li.textContent = `${time} : [${r.mainCategory}] ${r.subCategory}`;
+            li.textContent = `${time} : ${label}`;
             previewArea.appendChild(li);
           });
         }
